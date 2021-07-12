@@ -1,0 +1,73 @@
+The implemented methods in this file are:
+    nmc       nearest mean classifier
+    ldc       linear discriminant classifier
+    qdc       quadratic discriminant classifier
+    parzenc   Parzen classifier
+    knnc      k-Nearest neighbor classifier
+    mogc      mixture of Gaussians classifier
+    ababoostc AdaBoost
+    svc       support vector classifier
+    loglc     logistic classifier
+    dectreec  decision tree classifier
+    lassoc    logistic classifier
+
+    linearr   linear regression
+    ridger    ridgeregression
+    lassor    LASSO
+
+    hclust    Hierarchical Clustering clustering
+    plotdg    Plot dendrogram
+    dbi       Davies-Bouldin index
+
+    labeld    labeling objects
+    testc     test classifier
+    testr     test regressor
+    cleval    classifier evaluation
+    prcrossval  crossvalidation
+
+    scalem    scale mapping 
+    proxm     proximity mapping
+
+    pcam      principal component analysis
+    icam      independent component analysis
+    fisherm   Fisher mapping
+    
+    feateval  feature evaluation
+    featseli  individual feature selection
+    featself  sequential forward feature selection
+    featselb  sequential backward feature selection
+
+    softmax   calculate softmax for dataset
+    classc    normalize classifier output
+    mclassc   two-class to multiclass classifier
+    bayesrule applied to density estimations
+    gaussm    estimate gaussian density
+    fisherc   Fisher least square linear disciminant
+    knnm      K-nearest neighbor density estimation
+    parzenm   Parzen density estimate per class
+    naivebm   Naive Bayes density estimate per class
+    naivebc   Naive Bayes classifier
+    mogm      Mixture of Gaussians mapping
+    baggingc  bagging
+    stumpc    Decision stump classifier
+    adaboostc Adaboost classifier
+    winnowc   Winnow classifier
+    sqeucldist Squared Euclidean distances
+    clevalf   Feature curve
+    vandermondem Vandermonde Matrix
+    kernelr   Kernel Regression 
+    hclust    Hierarchical Clustering clustering
+    prkmeans  K-Means clustering
+    llem      locally linear embedding
+    isomapm   Isometric mapping
+
+A (small) subset of datasets:
+    gendatc   two spherical classes with different variances
+    gendats3  three spherical classes
+    gendatb   banana-shaped dataset
+    gendats   simple dataset
+    gendatd   difficult dataset
+    gendath   Highleyman dataset
+    gendatsinc   simple regression dataset
+    boomerangs   3D 2-class problem
+"""

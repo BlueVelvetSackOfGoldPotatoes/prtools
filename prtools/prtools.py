@@ -8,7 +8,7 @@ details of different classifiers, regressors, data-preprocessings and
 error evaluations, and allows for easy visualisation, comparison and
 combination of different methods.
 
-A (small) subset of the methods are:
+The implemented methods in this file are:
     nmc       nearest mean classifier
     ldc       linear discriminant classifier
     qdc       quadratic discriminant classifier
@@ -45,10 +45,36 @@ A (small) subset of the methods are:
     
     feateval  feature evaluation
     featseli  individual feature selection
-    featsetf  sequential forward feature selection
+    featself  sequential forward feature selection
     featselb  sequential backward feature selection
 
-A (small) subset of datasets:
+    softmax   calculate softmax for dataset
+    classc    normalize classifier output
+    mclassc   two-class to multiclass classifier
+    bayesrule applied to density estimations
+    gaussm    estimate gaussian density
+    fisherc   Fisher least square linear disciminant
+    knnm      K-nearest neighbor density estimation
+    parzenm   Parzen density estimate per class
+    naivebm   Naive Bayes density estimate per class
+    naivebc   Naive Bayes classifier
+    mogm      Mixture of Gaussians mapping
+    baggingc  bagging
+    stumpc    Decision stump classifier
+    adaboostc Adaboost classifier
+    winnowc   Winnow classifier
+    sqeucldist Squared Euclidean distances
+    clevalf   Feature curve
+    vandermondem Vandermonde Matrix
+    kernelr   Kernel Regression 
+    hclust    Hierarchical Clustering clustering
+    prkmeans  K-Means clustering
+    llem      locally linear embedding
+    isomapm   Isometric mapping
+
+The datasets generated in this file:
+    gendatc   two spherical classes with different variances
+    gendats3  three spherical classes
     gendatb   banana-shaped dataset
     gendats   simple dataset
     gendatd   difficult dataset

@@ -1,0 +1,87 @@
+%CURLABLIST Get current label list 
+%
+% [LABLISTNUMBER,LABLISTNAME,T0,T1] = CURLABLIST(A)
+%
+% INPUT
+%   A             - Dataset
+%
+% OUTPUT
+%   LABLISTNUMBER - Number of current lablist
+%   LABLISTNAME   - Name of current label list
+%		T0            - Start column current targets
+%   T1            - End column current targets
+%
+% DESCRIPTION
+% The number and name of the current label list are returned.
+% If T1<T0: no tergets (or soft labels) set for current label list.
+%
+% SEE ALSO
+% DATASETS, MULTI_LABELING, ADDLABLIST, CHANGELABLIST
+
+% Copyright: R.P.W. Duin, r.p.w.duin@prtools.org
+% Faculty EWI, Delft University of Technology
+% P.O. Box 5031, 2600 GA Delft, The Netherlands
+
+function [n,name,t0,t1] = curlablist(a)
+		prtrace(mfilename,2);
+		
+	if ~iscell(a.lablist) % no multiple labels defined
+		n = 1;
+		name = 'default';
+	else
+		n = a.lablist{end,2};
+		lablist = a.lablist{end,1};
+		name = deblank(lablist(n,:));
+	end
+	
+	if nargout > 2
+		targetsize = cumsum([0 a.lablist{end,3}]);
+		t0 = targetsize(n)+1;
+		t1 = targetsize(n+1);
+	end
+		
+fp: /home/goncalo/Documents/RUG/TA_Positions/BioCS/BioSB/BioSB-MachineLearning-2020/website/Data_and_code/Data and code/prtools4112/@dataset/curlablist.m
+ fn: curlablist -------------
+
+fp: /home/goncalo/Documents/RUG/TA_Positions/BioCS/BioSB/BioSB-MachineLearning-2020/website/Data_and_code/Data and code/prtools4112/@dataset/curlablist.m
+ fn: curlablist -------------
+
+fp: /home/goncalo/Documents/RUG/TA_Positions/BioCS/BioSB/BioSB-MachineLearning-2020/website/Data_and_code/Data and code/prtools4112/@dataset/curlablist.m
+ fn: curlablist -------------
+
+fp: /home/goncalo/Documents/RUG/TA_Positions/BioCS/BioSB/BioSB-MachineLearning-2020/website/Data_and_code/Data and code/prtools4112/@dataset/curlablist.m
+ fn: curlablist -------------
+
+fp: /home/goncalo/Documents/RUG/TA_Positions/BioCS/BioSB/BioSB-MachineLearning-2020/website/Data_and_code/Data and code/prtools4112/@dataset/curlablist.m
+ fn: curlablist -------------
+
+fp: /home/goncalo/Documents/RUG/TA_Positions/BioCS/BioSB/BioSB-MachineLearning-2020/website/Data_and_code/Data and code/prtools4112/@dataset/curlablist.m
+ fn: curlablist -------------
+
+fp: /home/goncalo/Documents/RUG/TA_Positions/BioCS/BioSB/BioSB-MachineLearning-2020/website/Data_and_code/Data and code/prtools4112/@dataset/curlablist.m
+ fn: curlablist -------------
+
+fp: /home/goncalo/Documents/RUG/TA_Positions/BioCS/BioSB/BioSB-MachineLearning-2020/website/Data_and_code/Data and code/prtools4112/@dataset/curlablist.m
+ fn: curlablist -------------
+
+fp: /home/goncalo/Documents/RUG/TA_Positions/BioCS/BioSB/BioSB-MachineLearning-2020/website/Data_and_code/Data and code/prtools4112/@dataset/curlablist.m
+ fn: curlablist -------------
+
+fp: /home/goncalo/Documents/RUG/TA_Positions/BioCS/BioSB/BioSB-MachineLearning-2020/website/Data_and_code/Data and code/prtools4112/@dataset/curlablist.m
+ fn: curlablist -------------
+
+fp: /home/goncalo/Documents/RUG/TA_Positions/BioCS/BioSB/BioSB-MachineLearning-2020/website/Data_and_code/Data and code/prtools4112/@dataset/curlablist.m
+ fn: curlablist -------------
+
+fp: /home/goncalo/Documents/RUG/TA_Positions/BioCS/BioSB/BioSB-MachineLearning-2020/website/Data_and_code/Data and code/prtools4112/@dataset/curlablist.m
+ fn: curlablist -------------
+
+fp: /home/goncalo/Documents/RUG/TA_Positions/BioCS/BioSB/BioSB-MachineLearning-2020/website/Data_and_code/Data and code/prtools4112/@dataset/curlablist.m
+ fn: curlablist -------------
+
+fp: /home/goncalo/Documents/RUG/TA_Positions/BioCS/BioSB/BioSB-MachineLearning-2020/website/Data_and_code/Data and code/prtools4112/@dataset/curlablist.m
+ fn: curlablist -------------
+fp: /home/goncalo/Documents/RUG/TA_Positions/BioCS/BioSB/BioSB-MachineLearning-2020/website/Data_and_code/Data and code/prtools4112/@dataset/curlablist.m
+ fn: curlablist -------------
+fp: /home/goncalo/Documents/RUG/TA_Positions/BioCS/BioSB/BioSB-MachineLearning-2020/website/Data_and_code/Data and code/prtools4112/@dataset/curlablist.m
+ fn: curlablist -------------

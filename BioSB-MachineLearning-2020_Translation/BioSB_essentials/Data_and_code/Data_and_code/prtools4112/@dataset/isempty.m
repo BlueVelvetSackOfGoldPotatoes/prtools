@@ -1,0 +1,77 @@
+%ISEMPTY Dataset overload
+%
+%	I = ISEMPTY(A,FIELD)
+%
+% INPUT
+%  A     Dataset
+%  FIELD Dataset field, default 'data'
+%
+% OUTPUT
+%  I     Flag, 1 if field is empty, 0 otherwise. 
+%
+% DESCRIPTION
+% Dataset overload for ISEMPTY. This is particulary useful for
+% ISEMPTY(A) to test on an empty dataset, and
+% ISEMPTY(A,'prior') to test on an undefined PRIOR field
+%
+% SEE ALSO
+% DATASET, SETPRIOR, GETPRIOR
+
+% $Id: isempty.m,v 1.6 2009/02/19 12:31:52 duin Exp $
+
+function i = isempty(a,field)
+		prtrace(mfilename,2);
+
+	if nargin < 2
+		i = (isempty(a.objsize)) | (prod(a.objsize) == 0);
+	else
+		i = isempty(a.(field));
+	end
+
+return
+
+fp: /home/goncalo/Documents/RUG/TA_Positions/BioCS/BioSB/BioSB-MachineLearning-2020/website/Data_and_code/Data and code/prtools4112/@dataset/isempty.m
+ fn: isempty -------------
+
+fp: /home/goncalo/Documents/RUG/TA_Positions/BioCS/BioSB/BioSB-MachineLearning-2020/website/Data_and_code/Data and code/prtools4112/@dataset/isempty.m
+ fn: isempty -------------
+
+fp: /home/goncalo/Documents/RUG/TA_Positions/BioCS/BioSB/BioSB-MachineLearning-2020/website/Data_and_code/Data and code/prtools4112/@dataset/isempty.m
+ fn: isempty -------------
+
+fp: /home/goncalo/Documents/RUG/TA_Positions/BioCS/BioSB/BioSB-MachineLearning-2020/website/Data_and_code/Data and code/prtools4112/@dataset/isempty.m
+ fn: isempty -------------
+
+fp: /home/goncalo/Documents/RUG/TA_Positions/BioCS/BioSB/BioSB-MachineLearning-2020/website/Data_and_code/Data and code/prtools4112/@dataset/isempty.m
+ fn: isempty -------------
+
+fp: /home/goncalo/Documents/RUG/TA_Positions/BioCS/BioSB/BioSB-MachineLearning-2020/website/Data_and_code/Data and code/prtools4112/@dataset/isempty.m
+ fn: isempty -------------
+
+fp: /home/goncalo/Documents/RUG/TA_Positions/BioCS/BioSB/BioSB-MachineLearning-2020/website/Data_and_code/Data and code/prtools4112/@dataset/isempty.m
+ fn: isempty -------------
+
+fp: /home/goncalo/Documents/RUG/TA_Positions/BioCS/BioSB/BioSB-MachineLearning-2020/website/Data_and_code/Data and code/prtools4112/@dataset/isempty.m
+ fn: isempty -------------
+
+fp: /home/goncalo/Documents/RUG/TA_Positions/BioCS/BioSB/BioSB-MachineLearning-2020/website/Data_and_code/Data and code/prtools4112/@dataset/isempty.m
+ fn: isempty -------------
+
+fp: /home/goncalo/Documents/RUG/TA_Positions/BioCS/BioSB/BioSB-MachineLearning-2020/website/Data_and_code/Data and code/prtools4112/@dataset/isempty.m
+ fn: isempty -------------
+
+fp: /home/goncalo/Documents/RUG/TA_Positions/BioCS/BioSB/BioSB-MachineLearning-2020/website/Data_and_code/Data and code/prtools4112/@dataset/isempty.m
+ fn: isempty -------------
+
+fp: /home/goncalo/Documents/RUG/TA_Positions/BioCS/BioSB/BioSB-MachineLearning-2020/website/Data_and_code/Data and code/prtools4112/@dataset/isempty.m
+ fn: isempty -------------
+
+fp: /home/goncalo/Documents/RUG/TA_Positions/BioCS/BioSB/BioSB-MachineLearning-2020/website/Data_and_code/Data and code/prtools4112/@dataset/isempty.m
+ fn: isempty -------------
+
+fp: /home/goncalo/Documents/RUG/TA_Positions/BioCS/BioSB/BioSB-MachineLearning-2020/website/Data_and_code/Data and code/prtools4112/@dataset/isempty.m
+ fn: isempty -------------
+fp: /home/goncalo/Documents/RUG/TA_Positions/BioCS/BioSB/BioSB-MachineLearning-2020/website/Data_and_code/Data and code/prtools4112/@dataset/isempty.m
+ fn: isempty -------------
+fp: /home/goncalo/Documents/RUG/TA_Positions/BioCS/BioSB/BioSB-MachineLearning-2020/website/Data_and_code/Data and code/prtools4112/@dataset/isempty.m
+ fn: isempty -------------
