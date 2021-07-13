@@ -17,22 +17,3 @@ if nargin < 2, N = []; end
 if nargin < 1, M = []; end
 a = prdataset('mfeat-mor',M,N);
 a = setname(a,'MFEAT Morphological Features');
-
-fp: /home/goncalo/Documents/RUG/TA_Positions/BioCS/BioSB/BioSB-MachineLearning-2020/website/Data_and_code/Data and code/prdatasets/mfeat_mor.m
- fn: mfeat_mor -------------
-
-fp: /home/goncalo/Documents/RUG/TA_Positions/BioCS/BioSB/BioSB-MachineLearning-2020/website/Data_and_code/Data and code/prdatasets/mfeat_mor.m
- fn: mfeat_mor -------------
-
-fp: /home/goncalo/Documents/RUG/TA_Positions/BioCS/BioSB/BioSB-MachineLearning-2020/website/Data_and_code/Data and code/prdatasets/mfeat_mor.m
- fn: mfeat_mor -------------
-
-fp: /home/goncalo/Documents/RUG/TA_Positions/BioCS/BioSB/BioSB-MachineLearning-2020/website/Data_and_code/Data and code/prdatasets/mfeat_mor.m
- fn: mfeat_mor -------------
-
-fp: /home/goncalo/Documents/RUG/TA_Positions/BioCS/BioSB/BioSB-MachineLearning-2020/website/Data_and_code/Data and code/prdatasets/mfeat_mor.m
- fn: mfeat_mor -------------
-fp: /home/goncalo/Documents/RUG/TA_Positions/BioCS/BioSB/BioSB-MachineLearning-2020/website/Data_and_code/Data and code/prdatasets/mfeat_mor.m
- fn: mfeat_mor -------------
-fp: /home/goncalo/Documents/RUG/TA_Positions/BioCS/BioSB/BioSB-MachineLearning-2020/website/Data_and_code/Data and code/prdatasets/mfeat_mor.m
- fn: mfeat_mor -------------

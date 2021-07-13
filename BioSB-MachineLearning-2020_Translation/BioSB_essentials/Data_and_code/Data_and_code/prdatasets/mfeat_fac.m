@@ -18,22 +18,3 @@ if nargin < 2, N = []; end
 if nargin < 1, M = []; end
 a = prdataset('mfeat-fac',M,N);
 a = setname(a,'MFEAT Face Features');
-
-fp: /home/goncalo/Documents/RUG/TA_Positions/BioCS/BioSB/BioSB-MachineLearning-2020/website/Data_and_code/Data and code/prdatasets/mfeat_fac.m
- fn: mfeat_fac -------------
-
-fp: /home/goncalo/Documents/RUG/TA_Positions/BioCS/BioSB/BioSB-MachineLearning-2020/website/Data_and_code/Data and code/prdatasets/mfeat_fac.m
- fn: mfeat_fac -------------
-
-fp: /home/goncalo/Documents/RUG/TA_Positions/BioCS/BioSB/BioSB-MachineLearning-2020/website/Data_and_code/Data and code/prdatasets/mfeat_fac.m
- fn: mfeat_fac -------------
-
-fp: /home/goncalo/Documents/RUG/TA_Positions/BioCS/BioSB/BioSB-MachineLearning-2020/website/Data_and_code/Data and code/prdatasets/mfeat_fac.m
- fn: mfeat_fac -------------
-
-fp: /home/goncalo/Documents/RUG/TA_Positions/BioCS/BioSB/BioSB-MachineLearning-2020/website/Data_and_code/Data and code/prdatasets/mfeat_fac.m
- fn: mfeat_fac -------------
-fp: /home/goncalo/Documents/RUG/TA_Positions/BioCS/BioSB/BioSB-MachineLearning-2020/website/Data_and_code/Data and code/prdatasets/mfeat_fac.m
- fn: mfeat_fac -------------
-fp: /home/goncalo/Documents/RUG/TA_Positions/BioCS/BioSB/BioSB-MachineLearning-2020/website/Data_and_code/Data and code/prdatasets/mfeat_fac.m
- fn: mfeat_fac -------------
