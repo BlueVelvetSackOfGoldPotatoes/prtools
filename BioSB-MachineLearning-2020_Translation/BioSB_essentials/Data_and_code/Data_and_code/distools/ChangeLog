@@ -1,0 +1,6 @@
+2001-07-10  Pavel Paclik  <pavel@ph.tn.tudelft.nl>
+
+	* disttools: creating rel-0-1 tag for distools0.1
+	
+	* disnorm.m (Repository): correcting typo in the function name
+
