@@ -1363,8 +1363,6 @@ def loglc(task=None,x=None,w=None):
     else:
         raise ValueError("Task '%s' is *not* defined for loglc."%task)
 
-
-
 def dectreec(task=None,x=None,w=None):
     "Decision tree classifier"
     if not isinstance(task,str):
@@ -2845,5 +2843,168 @@ def featselb(task=None, x=None, w=None):
     else:
         raise ValueError("Task '%s' is *not* defined for feature selection."%task)
 
+############## New functions ##############
 
+# UNTESTED
+def extractClass(w, a):
+    '''
+    Input
+        w = data
+        a = class
 
+    return row in data equal to class a.
+    '''
+    lab = w.lablist()
+    i = numpy.nonzero(lab == a)
+    return w[i]
+
+# UNTESTED
+def getsize(w, dim):
+    '''
+    GETSIZE Dataset size and number of classes
+
+    [M,K,C] = GETSIZE(A,DIM)
+
+    INPUT
+        W    Dataset
+        DIM  1,2 or 3 : the number of the output argument to be returned
+
+    OUTPUT
+        M    Number of objects
+        K    Number of features
+        C    Number of classes
+
+    DESCRIPTION
+    Returns size of the dataset A and the number of classes. C is determined from the number of labels stored in A.LABLIST. If DIM = 1,2 or 3, just one of these numbers is returned, e.g. C = GETSIZE(A,3).
+    '''
+    np_a = numpy.array(w.shape)
+
+    if dim == 1:
+        s = np_a[0]
+    elif dim == 2:
+        s = np_a[1]
+    elif dim == 3:
+        s = len(w.lablist())
+    else:
+        raise ValueError('Illegal parameter value')
+    return s
+
+# UNTESTED UNFINISHED DUE TO UNIMPLEMENTED METHOD DEPENDENCIES
+def gauss(n=50, u=numpy.zeros(n,1), g=eye(n), labtype='crisp'):
+    '''
+    Generation of a multivariate Gaussian dataset
+
+    INPUT (in case of generation a 1-class dataset in K dimensions)
+        N		    Number of objects to be generated (default 50).
+        U		    Desired mean (vector of length K).
+        G       K x K covariance matrix. Default eye(K).
+        LABTYPE Label type (default 'crisp')
+
+    INPUT (in case of generation a C-class dataset in K dimensions)
+        N       Vector of length C with numbers of objects per class.
+        U       C x K matrix with class means, or
+        Dataset with means, labels and priors of classes (default: zeros(C,K))
+        G       K x K x C covariance matrix of right size.
+        Default eye(K);
+        LABTYPE	Label type (default 'crisp')
+
+    A Dataset containing multivariate Gaussian data
+
+    Generation of N K-dimensional Gaussian distributed samples for C classes. The covariance matrices should be specified in G (size K*K*C) and the means, labels and prior probabilities can be defined by the dataset U with size (C*K). If U is not a dataset, it should be a C*K matrix and A will be a dataset with C classes.
+    '''
+    # importing "cmath" for complex number operations
+    import cmath
+  
+    if len(n) == 1 and n == 0:
+       a = prdataset([])
+       return a
+
+    elif type(u) == 'numpy.ndarray' or type(u) == 'list':
+        m, k, c = getsize(u), getsize(u), getsize(u)
+        lablist = lablist(u)
+        p = u.getprior()
+    for x in u:
+        if isinstance(x, float):
+           c, m, k = len(u), len(u), len(u)
+           lablist = genlab(numpy.ones((1,c)))
+           u = prdataset(u,lablist)
+           p = numpy.ones((1,c))/c
+           break
+    # Check if number of classes specified by n and u matches
+    if len(lablist(u)) != n:
+        raise ValueError('The number of classes specified by N and U does not match')
+    n = genclass(n,p) # GENCLASS IS NOT DEFINED YET
+
+    if not g:
+        g = eye(k)
+        cg = 1
+    else:
+        g = g.real
+        k1, k2, cg = len(g), len(g), len(g)
+        if k1 != k or k2 != k:
+            raise ValueError('The number of dimensions of the means U and covariance matrices G do not match')
+        if cg != m and cg != 1:
+            raise ValueError('The number of classes specified by the means U and covariance matrices G do not match')
+        
+        # Create the data A by rotating and scaling standard normal distributions using the eigenvectors of the pecified covariance matrices, and adding the means.
+    a = []
+
+    for i in range(m):
+        j = i if cg.min() < i else cg.mi
+        n()
+        # NOT TRANSLATED YET
+        # [V,D] = preig(g(:,:,j)); V = real(V); D = real(D); D = max(D,0);
+        # a = [a; randn(n(i),k)*sqrt(D)*V' + repmat(+u(i,:),n(i),1)]; 
+
+    labels = genlab(n, lablist)
+    a = prdataset(a, labels, 'lablist', lablist, 'prior', p)
+
+    if labtype == 'soft':
+        w =  nbayesc(u,g) # nbayesc IS NOT DEFINED YET
+        targets = a * w * classc()
+        a = setlabtype(a, 'soft', targets) # setlabtype IS NOT DEFINED YET
+    else:
+        raise ValueError('Label type ' + labtype + ' not supported')
+
+    matplotlib.pyplot.gcf().canvas.manager.set_window_title('Gaussian Data')
+    return a
+
+# UNTESTED UNFINISHED
+def gendatdd(n=100, d=2):
+    '''
+    Generates a 2-class data set containing N points in 
+    a D-dimensional distribution.
+        A = GENDATDD (N,D) 
+     
+    In this distribution, 2 randomly chosen 
+    dimensions contain fully separated Gaussian distributed data; the others 
+    contain unit covariance Gaussian noise.
+
+	data = +gauss(n,2*ones(1,d),5*eye(d));
+    # data = numpy.eye(d)
+
+	a = +gauss(floor(n/2),[0 0],[3 -2.5; -2.5 3]);
+	b = +gauss(ceil(n/2), [4 4],[3 -2.5; -2.5 3]);
+
+	p = randperm(d);
+	data(:,p(1:2)) = [a; b];
+
+	labs = [ ones(floor(n/2),1); 2*ones(ceil(n/2),1) ];
+	
+	data = dataset(+data,labs);
+    '''
+    import math
+
+    data = gauss(n, 2*numpy.zeroes((1, d)), 5*eye(d))
+
+    a = gauss(math.floor(n/2),[0, 0],numpy.array([[3, -2.5], [-2.5, 3]]))
+    
+    b = gauss(math.ceil(n/2), [4, 4],numpy.array([[3, -2.5], [-2.5, 3]]))
+    
+    p = numpy.random.permutation(d)
+    # NOT TRANSLATED YET
+    # data(:,p(1:2)) = [a; b];
+
+    labs = [numpy.ones((math.floor(n/2), 1)), [2*numpy.ones((math.ceil(n/2),1))]]
+
+    data = prdataset(data, labs)

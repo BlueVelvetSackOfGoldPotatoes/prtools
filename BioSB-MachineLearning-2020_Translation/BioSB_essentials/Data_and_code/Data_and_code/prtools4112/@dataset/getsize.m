@@ -22,11 +22,11 @@ function [varargout] = getsize(a,dim)
 	prtrace(mfilename,2);
 	
 	if nargin < 2
-		s = [size(a) size(getlablist(a),1)];
+		s = [size(a) size(getlablist(a),1)]
 	elseif dim <= 2
-		s = size(a,dim);
+		s = size(a,dim)
 	elseif dim == 3
-		s = size(getlablist(a),1);
+		s = size(getlablist(a),1)
 	else
 		error('Illegal parameter value')
 	end	
