@@ -2903,6 +2903,37 @@ def getsize(w, dim):
         raise ValueError('Illegal parameter value')
     return s
 
+def preig(a):
+    ###################
+    function [E,D] = preig(A)
+
+    [m,n] = size(A);
+    if min([m,n]) > 500
+        prwaitbaronce('Computing %i x %i eigenvectors ...',[m,n]);
+        if nargout == 1
+            E = eig(A);
+        else
+            [E,D] = eig(A);
+        end
+        prwaitbar(0);
+    else
+        if nargout == 1
+            E = eig(A);
+        else
+            [E,D] = eig(A);
+        end
+    end
+    ###################
+    '''
+    PREIG Call to EIG() including PRWAITBAR 
+    
+        [E,D] = PREIG(A)
+    
+    This calls [E,D] = EIG(A) and includes a message to PRWAITBAR in case of a large A
+    '''
+    m, n = a.shape
+    
+
 # UNTESTED UNFINISHED DUE TO UNIMPLEMENTED METHOD DEPENDENCIES
 def gauss(n=50, u=numpy.zeros(n,1), g=eye(n), labtype='crisp'):
     '''
@@ -2939,7 +2970,8 @@ def gauss(n=50, u=numpy.zeros(n,1), g=eye(n), labtype='crisp'):
 
     for x in u:
         if isinstance(x, float):
-           c, m, k = len(u), len(u), len(u)
+           m, k = numpy.array(u).shape
+           c = m
            lablist = genlab(numpy.ones((1,c)))
            u = prdataset(u,lablist)
            p = numpy.ones((1,c))/c
@@ -2947,14 +2979,14 @@ def gauss(n=50, u=numpy.zeros(n,1), g=eye(n), labtype='crisp'):
     # Check if number of classes specified by n and u matches
     if len(lablist(u)) != n:
         raise ValueError('The number of classes specified by N and U does not match')
-    n = genclass(n,p) # GENCLASS IS NOT DEFINED YET
+    n = genclass(n,p)
 
     if not g:
         g = eye(k)
         cg = 1
     else:
         g = g.real
-        k1, k2, cg = len(g), len(g), len(g)
+        k1, k2, cg =  numpy.array(g).shape
         if k1 != k or k2 != k:
             raise ValueError('The number of dimensions of the means U and covariance matrices G do not match')
         if cg != m and cg != 1:
@@ -3009,3 +3041,4 @@ def gendatdd(n=100, d=2):
 
     data = prdataset(data, labs)
     return data
+
