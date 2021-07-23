@@ -2855,8 +2855,22 @@ def extractClass(w, a):
     return row in data equal to class a.
     '''
     lab = w.lablist()
-    i = numpy.nonzero(lab == a)
-    return w[i]
+    _, columns = lab.shape
+    final_rows = []
+
+    for r in lab:
+        for c in r:
+            if c == a:
+                print(r)
+                print()
+                print(numpy.array(r))
+                final_rows.append(r)
+                break
+            
+    final_rows = numpy.array(final_rows)
+    print(final_rows)
+
+    return final_rows
 
 # UNTESTED
 def getsize(w, dim):
@@ -2918,11 +2932,11 @@ def gauss(n=50, u=numpy.zeros(n,1), g=eye(n), labtype='crisp'):
     if len(n) == 1 and n == 0:
        a = prdataset([])
        return a
-
     elif type(u) == 'numpy.ndarray' or type(u) == 'list':
         m, k, c = getsize(u), getsize(u), getsize(u)
         lablist = lablist(u)
         p = u.getprior()
+
     for x in u:
         if isinstance(x, float):
            c, m, k = len(u), len(u), len(u)
@@ -2969,7 +2983,7 @@ def gauss(n=50, u=numpy.zeros(n,1), g=eye(n), labtype='crisp'):
     matplotlib.pyplot.gcf().canvas.manager.set_window_title('Gaussian Data')
     return a
 
-# UNTESTED UNFINISHED
+# UNTESTED
 def gendatdd(n=100, d=2):
     '''
     Generates a 2-class data set containing N points in 
@@ -2979,19 +2993,6 @@ def gendatdd(n=100, d=2):
     In this distribution, 2 randomly chosen 
     dimensions contain fully separated Gaussian distributed data; the others 
     contain unit covariance Gaussian noise.
-
-	data = +gauss(n,2*ones(1,d),5*eye(d));
-    # data = numpy.eye(d)
-
-	a = +gauss(floor(n/2),[0 0],[3 -2.5; -2.5 3]);
-	b = +gauss(ceil(n/2), [4 4],[3 -2.5; -2.5 3]);
-
-	p = randperm(d);
-	data(:,p(1:2)) = [a; b];
-
-	labs = [ ones(floor(n/2),1); 2*ones(ceil(n/2),1) ];
-	
-	data = dataset(+data,labs);
     '''
     import math
 
@@ -3002,9 +3003,9 @@ def gendatdd(n=100, d=2):
     b = gauss(math.ceil(n/2), [4, 4],numpy.array([[3, -2.5], [-2.5, 3]]))
     
     p = numpy.random.permutation(d)
-    # NOT TRANSLATED YET
-    # data(:,p(1:2)) = [a; b];
+    data[:,p[0:1]] = numpy.block([[a], [b]])
 
     labs = [numpy.ones((math.floor(n/2), 1)), [2*numpy.ones((math.ceil(n/2),1))]]
 
     data = prdataset(data, labs)
+    return data

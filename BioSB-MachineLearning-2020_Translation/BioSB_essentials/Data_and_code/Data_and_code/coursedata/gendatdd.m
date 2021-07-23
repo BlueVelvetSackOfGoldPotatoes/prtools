@@ -5,7 +5,7 @@
 %  dimensions contain fully separated Gaussian distributed data; the others 
 %  contain unit covariance Gaussian noise.
 %
-%  Defaults: N = 100, D = 2.
+%  	gendatddgendatddgendatdd
 
 function data = gendatdd (n, d)
 
