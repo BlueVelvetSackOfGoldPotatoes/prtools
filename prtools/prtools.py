@@ -2845,7 +2845,606 @@ def featselb(task=None, x=None, w=None):
 
 ############## New functions ##############
 
-# UNTESTED
+
+# UNTESTED UNFINISHED DUE TO UNIMPLEMENTED METHOD DEPENDENCIES
+def laplace(n, m, mu, S):
+    ######################## MATLAB
+    function out = laplace (n, m, mu, S)
+
+        if (nargin < 1), n  = 1;          end;
+        if (nargin < 2), m  = n;          end;
+        if (nargin < 3), mu = zeros(1,m); end;
+    if (nargin < 4), S  = eye(m);     end;
+
+        out = myexprnd(1,n,m); 
+
+        % Convert exponential to Laplacian distributed data
+
+        for i = 1:n
+            for j = 1:m
+                if (rand(1,1) > 0.5)
+                    out(i,j) = -out(i,j);
+                end;
+            end;
+        end;
+
+        % Remove covariance
+        out = out * inv(sqrtm(cov(out)));
+
+        % Add in desired covariance and mean
+        out = out * sqrtm(S) + ones(n,1)*mu;
+
+    return
+    ########################
+    '''
+    LAPLACE  Laplacian distributed random numbers.
+
+        LAPLACE(N) is an N-by-N matrix with random entries, chosen from a Laplacian distribution with mean zero and variance one.
+    
+        LAPLACE(N,M) is an N-by-M matrix with random entries.
+   
+        LAPLACE(N,M,MU,S) is an N-by-M matrix with random entries, chosen from a Laplacian distribution with mean MU and covariance matrix S.
+    
+        MU should be an 1-by-M vector, S an M-by-M matrix.
+    
+        LAPLACE with no arguments is a scalar whose value changes each time it is referenced. 
+    '''
+
+# UNTESTED UNFINISHED DUE TO UNIMPLEMENTED METHOD DEPENDENCIES
+def lines5d(N):
+    ######################## MATLAB
+    function data = lines5d(N)
+            prtrace(mfilename);
+
+        if nargin< 1, N = [50 50 50]; end
+
+        N = genclass(N,ones(1,3)/3);
+        n1 = N(1);
+        n2 = N(2);
+        n3 = N(3);
+
+    s1 = [0 0 0 1 0];
+    s2 = [1 1 1 0 0];
+    s3 = [0 1 0 1 0];
+    s4 = [1 1 1 1 1];
+    s5 = [0 1 1 0 1];
+    s6 = [1 0 1 1 1];
+    c1 = [0:1/(n1-1):1]';
+    c2 = [0:1/(n2-1):1]';
+    c3 = [0:1/(n3-1):1]';
+    a  = c1*s1 + (1-c1)*s2;
+    a  = [a; c2*s3 + (1-c2)*s4];
+    a  = [a; c3*s5 + (1-c3)*s6];
+
+        data = dataset(a,genlab(N));
+        data = setname(data,'5D Lines');
+
+    return
+    ########################
+    '''
+    %LINES5D  Generates three 5-dimensional lines
+
+	    A = LINES5D(N);
+
+    Generates a data set of N points, on 3 non-crossing, non-parallel lines in 5 dimensions. 
+
+    If N is a vector of sizes, exactly N(I) objects are generated for class I, I = 1,2.Default: N = [50 50 50].
+    '''
+
+# UNTESTED UNFINISHED DUE TO UNIMPLEMENTED METHOD DEPENDENCIES
+def gendatgauss(n, u, g, labtype):
+    ######################## MATLAB
+    function a = gendatgauss(n,u,g,labtype)
+
+        prtrace(mfilename);
+
+        if (nargin < 1)
+            prwarning (2,'number of samples not specified, assuming N = 50'); 	
+            n = 50;
+            end
+            cn = length(n);
+        if (nargin < 2)
+            prwarning (2,'means not specified; assuming one dimension, mean zero');
+            u = zeros(cn,1); 
+        end;
+        if (nargin < 3)
+            prwarning (2,'covariances not specified, assuming unity');
+            g = eye(size(u,2)); 
+        end
+        if (nargin < 4)
+            prwarning (3,'label type not specified, assuming crisp');
+            labtype = 'crisp'; 
+        end
+
+        % Return an empty dataset if the number of samples requested is 0.
+
+        if (length(n) == 1) & (n == 0)
+            a = dataset([]); 
+            return
+        end
+
+        % Find C, desired number of classes based on U and K, the number of 
+        % dimensions. Make sure U is a dataset containing the means.
+
+        if (isa(u,'dataset'))
+            [m,k,c] = getsize(u);
+            lablist = getlablist(u);
+            p = getprior(u);
+            if c == 0
+                u = double(u);
+            end
+        end
+        if isa(u,'double')
+            [m,k] = size(u); 		
+            c = m;
+            lablist = genlab(ones(c,1));
+            u = dataset(u,lablist);
+            p = ones(1,c)/c;
+        end
+
+        if (cn ~= c) & (cn ~= 1)
+            error('The number of classes specified by N and U does not match');
+        end
+
+        % Generate a class frequency distribution according to the desired priors.
+        n = genclass(n,p);
+
+        % Find CG, the number of classes according to G. 
+        % Make sure G is not a dataset.
+
+        if (isempty(g))
+            g = eye(k); 
+            cg = 1;
+        else
+            g = real(+g); [k1,k2,cg] = size(g);
+            if (k1 ~= k) | (k2 ~= k)
+                error('The number of dimensions of the means U and covariance matrices G do not match');
+            end
+            if (cg ~= m & cg ~= 1)
+                error('The number of classes specified by the means U and covariance matrices G do not match');
+            end
+        end
+
+        % Create the data A by rotating and scaling standard normal distributions 
+        % using the eigenvectors of the specified covariance matrices, and adding
+        % the means.
+
+        a = [];
+        for i = 1:m
+            j = min(i,cg);						% Just in case CG = 1 (if G was not specified).
+
+            % Sanity check: user can pass non-positive definite G.		
+            [V,D] = preig(g(:,:,j)); V = real(V); D = real(D); D = max(D,0);
+            a = [a; randn(n(i),k)*sqrt(D)*V' + repmat(+u(i,:),n(i),1)];
+        end
+
+        % Convert A to dataset by adding labels and priors.
+
+        labels = genlab(n,lablist);
+        a = dataset(a,labels,'lablist',lablist,'prior',p);
+
+        % If non-crisp labels are requested, use output of Bayes classifier.
+        switch (labtype)
+            case 'crisp'
+                ;
+            case 'soft'
+                w = nbayesc(u,g); 		
+                targets = a*w*classc;
+                a = setlabtype(a,'soft',targets);
+            otherwise
+                error(['Label type ' labtype ' not supported'])
+        end
+
+        a = setname(a,'Gaussian Data');
+
+    return
+    ########################
+    '''
+    GENDATGAUSS (Formerly GAUSS) Generation of a multivariate Gaussian dataset
+ 
+ 	A = GENDATGAUSS(N,U,G,LABTYPE) 
+
+    INPUT (in case of generation a 1-class dataset in K dimensions)
+        N		    Number of objects to be generated (default 50).
+        U		    Desired mean (vector of length K).
+        G       K x K covariance matrix. Default eye(K).
+        LABTYPE Label type (default 'crisp')
+
+    INPUT (in case of generation a C-class dataset in K dimensions)
+        N       Vector of length C with numbers of objects per class.
+        U       C x K matrix with class means, or
+                Dataset with means, labels and priors of classes 
+                (default: zeros(C,K))
+        G       K x K x C covariance matrix of right size.
+                Default eye(K);
+        LABTYPE	Label type (default 'crisp')
+
+    OUTPUT
+        A       Dataset containing multivariate Gaussian data
+
+    DESCRIPTION
+        Generation of N K-dimensional Gaussian distributed samples for C classes.
+        The covariance matrices should be specified in G (size K*K*C) and the
+        means, labels and prior probabilities can be defined by the dataset U with
+        size (C*K). If U is not a dataset, it should be a C*K matrix and A will
+        be a dataset with C classes.
+
+        If N is a vector, exactly N(I) objects are generated for class I, 
+        I = 1..C.
+        
+    EXAMPLES
+    1. Generation of 100 points in 2D with mean [1 1] and default covariance
+        matrix: 
+
+            GENDATGAUSS(100,[0 0])
+
+    2. Generation of 50 points for each of two 1-dimensional distributions with
+        mean -1 and 1 and with variances 1 and 2:
+
+            GENDATGAUSS([50 50],[-1;1],CAT(3,1,2))
+
+    Note that the two 1-dimensional class means should be given as a column
+    vector [1;-1], as [1 -1] defines a single 2-dimensional mean. Note that
+    the 1-dimensional covariance matrices degenerate to scalar variances,
+    but have still to be combined into a collection of square matrices using
+    the CAT(3,....) function.
+
+    3. Generation of 300 points for 3 classes with means [0 0], [0 1] and 
+        [1 1] and covariance matrices [2 1; 1 4], EYE(2) and EYE(2):
+
+        GENDATGAUSS(300,[0 0; 0 1; 1 1]*3,CAT(3,[2 1; 1 4],EYE(2),EYE(2)))
+    '''
+
+
+# UNTESTED UNFINISHED DUE TO UNIMPLEMENTED METHOD DEPENDENCIES
+def gendatp(A,N,s,G):
+    ######################## MATLAB
+    function B = gendatp(A,N,s,G)
+
+        prtrace(mfilename);
+
+        if (nargin < 1)
+            error('No dataset found');
+        end
+
+        A = dataset(A);
+        A = setlablist(A); % remove empty classes first
+
+        [m,k,c] = getsize(A);
+        p = getprior(A);
+        if (nargin < 2) 
+            prwarning(4,'Number of points not specified, 50 per class assumed.');
+            N = repmat(50,1,c); 
+        end
+        if (nargin < 3) 
+            prwarning(4,'Smoothing parameter(s) not specified, to be determined be an ML estimate.');
+            s = 0; 
+        end
+
+        if (length(s) == 1)
+            s = repmat(s,1,c);
+        end
+        if (length(s) ~= c)
+            error('Wrong number of smoothing parameters.')
+        end
+
+        if (nargin < 4)
+            prwarning(4,'Covariance matrices not specified, identity matrix assumed.');
+            covmat = 0; 			% covmat indicates whether a covariance matrix should be used
+                                                % 0 takes the identity matrix as the covariance matrix
+        else
+            covmat = 1;
+            if (ndims(G) == 2)
+                G = repmat(G,[1 1 c]);
+            end
+            if any(size(G) ~= [k k c])
+                error('Covariance matrix has a wrong size.')
+            end
+        end
+        
+        N = genclass(N,p);
+        lablist = getlablist(A);
+
+        B = [];
+        labels = [];
+        % Loop over classes.
+        for j=1:c
+            a = getdata(A,j);
+            a = dataset(a);
+            ma = size(a,1);
+            if (s(j) == 0)				% Estimate the smoothing parameter.
+                h = parzenml(a);
+            else
+                h = s(j);
+            end
+            if (~covmat)
+                b = a(ceil(rand(N(j),1) * ma),:) + randn(N(j),k).*repmat(h,N(j),k);
+            else 
+                b = a(ceil(rand(N(j),1) * ma),:) + ...
+                    gendatgauss(N(j),zeros(1,k),G(:,:,j)).*repmat(h,N(j),k);
+            end
+
+            B = [B;b];
+            labels = [labels; repmat(lablist(j,:),N(j),1)];
+        end
+        B = dataset(B,labels);
+        B = setprior(B,p);
+        B = set(B,'featlab',getfeatlab(A),'name',getname(A),'featsize',getfeatsize(A));	
+
+    return
+    ########################
+    '''
+    GENDATP Parzen density data generation
+     
+    B = GENDATP(A,N,S,G)
+     
+    INPUT
+        A  Dataset
+        N  Number(s) of points to be generated (optional; default: 50 per class)
+        S  Smoothing parameter(s) 
+            (optional; default: a maximum likelihood estimate based on A)
+        G  Covariance matrix used for generation of the data 
+            (optional; default: the identity matrix)
+    
+    OUTPUT
+        B  Dataset of points generated according to Parzen density
+    
+    DESCRIPTION  
+        Generation of a dataset B of N points by using the Parzen estimate of the
+        density of A based on a smoothing parameter S. N might be a row/column 
+        vector with different numbers for each class. Similarly, S might be 
+        a vector with different smoothing parameters for each class. If S = 0, 
+        then S is determined by a maximum likelihood estimate using PARZENML. 
+        If N is a vector, then exactly N(I) objects are generated for the class I. 
+        G is the covariance matrix to be used for generating the data. G may be 
+        a 3-dimensional matrix storing separate covariance matrices for each class.
+    '''
+
+# UNTESTED UNFINISHED DUE TO UNIMPLEMENTED METHOD DEPENDENCIES
+def gendatk(A, N, K, stdev):
+    ######################## MATLAB
+    function B = gendatk(A,N,k,stdev)
+
+        prtrace(mfilename);
+
+        if (nargin < 4) 		
+            prwarning(3,'Standard deviation of the added Gaussian noise is not specified, assuming 1.');
+            stdev = 1; 
+        end
+        if (nargin < 3) 
+            prwarning(3,'Number of nearest neighbors to be used is not specified, assuming 1.');
+            k = 1; 
+        end
+        if (nargin < 2)
+            prwarning(3,'Number of samples to generate is not specified, assuming 50.');
+            N = [];   % This happens some lines below.
+        end
+        if (nargin < 1)
+            error('No dataset found.');
+        end
+
+        A = dataset(A);
+        A = setlablist(A); % remove empty classes first
+        [m,n,c] = getsize(A);
+        prior = getprior(A);
+        if isempty(N), 
+            N = repmat(50,1,c); 				% 50 samples are generated.  		
+        end
+        N = genclass(N,prior);				% Generate class frequencies according to the priors.			
+
+        lablist = getlablist(A);
+        B = [];
+        labels = [];
+        % Loop over classes.
+        for j=1:c
+            a = getdata(A,j); 					% The j-th class.
+            [D,I] = sort(distm(a)); 
+            I = I(2:k+1,:); 						% Indices of the K nearest neighbors.
+            alf = randn(k,N(j))*stdev;	% Normally distributed 'noise'.
+            nu = ceil(N(j)/size(a,1));	% It is possible that NU > 1 if many objects have to be generated. 
+            J = randperm(size(a,1));		
+            J = repmat(J,nu,1)';				
+            J = J(1:N(j));							% Combine the NU repetitions of J into one column vector.
+            b = zeros(N(j),n);
+
+            % Loop over features.
+            for f = 1:n
+        %      Take all objects given by J, consider feature F.
+        %      Their K nearest neighbors are given by I(:,J)
+        %      We reshape them as a N(j) by K matrix (N(j) is the length of J)
+        %      Compute all differences between them and the original objects
+        %      Multiply these differences by the std dev stored in alf
+        %      Transpose and sum over the K neighbors, normalize by K
+        %      Transpose again and add to the original objects 
+                b(:,f) = a(J,f) + sum(( ( a(J,f)*ones(1,k) - ...
+                                    reshape(+a(I(:,J),f),k,N(j))' ) .* alf' )' /k, 1)';
+            end
+            B = [B;b];
+            labels = [labels; repmat(lablist(j,:),N(j),1)];
+        end
+
+        B = dataset(B,labels,'prior',A.prior);
+        %B = set(B,'featlab',getfeatlab(A),'name',getname(A),'featsize',getfeatsize(A));
+        %DXD. Added this exception, because else it's going to complain
+        %     that the name is not a string.
+        B = set(B,'featlab',getfeatlab(A),'featsize',getfeatsize(A));
+        if ~isempty(getname(A))
+            B = setname(B,getname(A));
+        end
+
+    return;
+    ########################
+    '''
+    GENDATK K-Nearest neighbor data generation
+    
+    B = GENDATK(A,N,K,S)
+
+    INPUT
+    A  Dataset
+    N  Number of points (optional; default: 50)
+    K  Number of nearest neighbors (optional; default: 1)
+    S  Standard deviation (optional; default: 1)
+
+    OUTPUT
+        B  Generated dataset
+
+    DESCRIPTION 
+        Generation of N points using the K-nearest neighbors of objects in the  dataset A. First, N points of A are chosen in a random order. Next, to each  of these points and for each direction (feature), a Gaussian-distributed  offset is added with the zero mean and the standard deviation: S * the mean  signed difference between the point of A under consideration and its K nearest neighbors in A. 
+
+    The result of this procedure is that the generated  points follow the local density properties of the point from which they originate.
+
+    If A is a multi-class dataset the above procedure is followed class by class, neglecting objects of other classes and possibly unlabeled objects.
+
+    If N is a vector of sizes, exactly N(I) objects are generated for class I. Default N is 100 objects per class.
+    '''
+
+# UNTESTED UNFINISHED DUE TO UNIMPLEMENTED METHOD DEPENDENCIES
+def nbayesc(u,g):
+    ######################## MATLAB
+    function W = nbayesc(U,G);
+
+        prtrace(mfilename);
+        [cu,ku] = size(U);		% CU is the number of classes and KU - the dimensionality
+        if nargin == 1,
+            prwarning(4,'Covariance matrix is not specified, the identity matrix is assumed.');  
+            G = eye(ku);
+        end
+
+        [k1,k2,c] = size(G);	% C = 1, if G is the common covariance matrix.
+
+        if (c ~= 1 & c ~= cu) | (k1 ~= k2) | (k1 ~= ku)
+            error('Covariance matrix or a set of means has a wrong size.')
+        end
+
+        pars.mean  = +U;
+        pars.cov   = G;
+        pars.prior = getprior(U);
+
+        %W = mapping('normal_map','trained',pars,getlablist(U),ku,cu);
+        W = normal_map(pars,getlablist(U),ku,cu);
+        W = setname(W,'BayesNormal');
+        W = setcost(W,U);
+
+    return;
+    ########################
+    '''
+    NBAYESC Bayes Classifier for given normal densities
+     
+       W = NBAYESC(U,G)
+     
+    INPUT
+       U  Dataset of means of classes   
+       G  Covariance matrices (optional; default: identity matrices)
+    
+    OUTPUT
+    	W  Bayes classifier
+    
+    DESCRIPTION
+    Computation of the Bayes normal classifier between a set of classes.
+    The means, labels and priors are defined by the dataset U of the size
+    [C x K]. The covariance matrices are stored in a matrix G of the 
+    size [K x K x C], where K and C correspond to the dimensionality and 
+    the number of classes, respectively. 
+    
+    If C is 1, then G is treated as the common covariance matrix, yielding
+    a linear solution. For G = I, the nearest mean solution is obtained.
+    
+    This routine gives the exact solution for the given parameters, while
+    the trainable classifiers QDC and LDC give approximate solutions, based
+    on the parameter estimates from a training set. For a given dataset, U 
+    and G can be computed by MEANCOV.
+    
+    EXAMPLES
+    [U,G] = MEANCOV(GENDATB(25));
+    W = NBAYESC(U,G);
+    '''
+
+# UNTESTED UNFINISHED DUE TO UNIMPLEMENTED METHOD DEPENDENCIES
+def setlabtype(a, type, labels):
+    ######################## MATLAB
+    function a = setlabtype(a,type,labels)
+            prtrace(mfilename,2);
+    [m,k,c] = getsize(a);
+
+    a = addlablist(a);   % set up multiple labels if not yet done
+    [curn,curname,t0,t1] = curlablist(a);
+    if nargin == 3                % no coversion, just creation
+        switch type
+        case {'crisp','CRISP'}      % create crisp
+                a.labtype = 'crisp';
+        case {'soft','SOFT'}        % create soft
+                a.labtype = 'soft';
+        case {'targets','TARGETS'}   % create soft
+                a.labtype = 'targets';
+        otherwise
+                error(['Unknown label type: ',type])
+        end
+        a = setlabels(a,labels);
+        return
+    end
+
+    switch type
+    case {'crisp','CRISP'}     % convert to crisp
+        switch a.labtype
+        case {'soft','targets'}  % from soft or targets
+        [mm,nlaba] = max(a.targets(:,t0:t1),[],2); % reset nlab 
+            a.nlab(:,curn) = nlaba-t0+1;
+        a.targets(:,t0:t1) = [];                    % and targets
+            a.lablist{end,3}(curn) = 0;
+        end
+    case {'soft','SOFT'}       % convert to soft
+        if c < 1
+            error('Soft labeled datasets should contain at least one class')
+        end
+        switch a.labtype
+        case 'crisp'             % from crisp
+            prior = getprior(a,0);
+            a.labtype = 'soft';
+            a = settargets(a,zeros(m,c));% make target field ready (will be 0-1)
+            for j=1:c
+                J = find(a.nlab(:,curn) == j);
+                a.targets(J,t0+j-1) = ones(length(J),1); % ones it for the right class
+            end
+            a = setprior(a,prior); % priors are lost during conversion: correct!
+        case 'targets'           % from targets
+            [mm,nlaba] = max(a.targets(:,t0:t1),[],2);
+            nlaba = nlaba-t0+1;
+            a.nlab(:,curn) = nlaba;
+            if any(a.targets(:,t0:t1) < 0) | any(a.targets(:,t0:t1) > 1) % convert if ouside 0-1
+                a.targets(:,t0:t1) = sigm(a.targets(:,t0:t1));
+                prwarning(10,'targets converted to soft labels by sigm')
+            end
+        end
+    case {'targets','TARGETS'}        % convert to targets
+        switch a.labtype
+    case 'crisp'                    % from crisp, in two steps
+            if c >= 1
+                a = setlabtype(a,'soft');   % first to soft labels (0-1)
+                a = setlabtype(a,'targets');% then to targets, see below
+            end
+        case 'soft'                     % from soft
+            a.targets(:,t0:t1) = 2*a.targets(:,t0:t1) - 1;  % convert 0,1 interval to -1,1 interval
+            a.nlab(:,curn) = zeros(m,1);  % reset nlab
+        a.prior = [];                 % no class priors
+        a.cost  = [];                 % np classification costs
+        end
+    otherwise
+        error(['Unknown label type: ',type])
+    end
+    a.lablist{curn,4} = lower(type);
+    a.labtype = lower(type);
+    ########################
+    '''
+    SETLABTYPE Reset label type of dataset
+        A = SETLABTYPE(A,TYPE,LABELS)
+
+    The label type of the dataset A is converted to TYPE ('crisp','soft' or 'targets'). A conversion of the dataset fields 'nlab', 'lablist' and 'targets' is made where necessary. If given, LABELS replaces the labels or targets of A.
+
+    EXAMPLE
+    a = dataset(rand(10,5)); % create dataset of 10 objects and 5 features
+    a = setlabtype(a,'soft',rand(10,1)); % give it random soft labels
+    '''
+    
 def extractClass(w, a):
     '''
     Input
