@@ -3444,7 +3444,7 @@ def setlabtype(a, type, labels):
     a = dataset(rand(10,5)); % create dataset of 10 objects and 5 features
     a = setlabtype(a,'soft',rand(10,1)); % give it random soft labels
     '''
-    
+
 def extractClass(w, a):
     '''
     Input
@@ -3541,6 +3541,7 @@ def gauss(n=50, u=numpy.zeros(n,1), g=eye(n), labtype='crisp'):
     '''
     # importing "cmath" for complex number operations
     import cmath
+    import math
   
     if len(n) == 1 and n == 0:
        a = prdataset([])
@@ -3580,9 +3581,11 @@ def gauss(n=50, u=numpy.zeros(n,1), g=eye(n), labtype='crisp'):
     for i in range(m):
         j = i if cg.min() < i else cg.mi
         n()
-        # NOT TRANSLATED YET
-        # [V,D] = preig(g(:,:,j)); V = real(V); D = real(D); D = max(D,0);
-        # a = [a; randn(n(i),k)*sqrt(D)*V' + repmat(+u(i,:),n(i),1)]; 
+        V, D = preig(g[:,:,j])
+        V = V.real
+        D = D.real
+        D = max(D, 0)
+        a = [[a],[numpy.random.randn(n[i], k) * math.sqrt(D) * V + tile(u[i,:],(n[i], 1))]]
 
     labels = genlab(n, lablist)
     a = prdataset(a, labels, 'lablist', lablist, 'prior', p)
