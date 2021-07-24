@@ -3362,8 +3362,6 @@ def nbayesc(u,g):
 # UNTESTED UNFINISHED DUE TO UNIMPLEMENTED METHOD DEPENDENCIES
 def setlabtype(a, type, labels):
     ######################## MATLAB
-    function a = setlabtype(a,type,labels)
-            prtrace(mfilename,2);
     [m,k,c] = getsize(a);
 
     a = addlablist(a);   % set up multiple labels if not yet done
@@ -3444,6 +3442,7 @@ def setlabtype(a, type, labels):
     a = dataset(rand(10,5)); % create dataset of 10 objects and 5 features
     a = setlabtype(a,'soft',rand(10,1)); % give it random soft labels
     '''
+    m, k, c = 
 
 def extractClass(w, a):
     '''
@@ -3472,7 +3471,7 @@ def extractClass(w, a):
     return final_rows
 
 # UNTESTED
-def getsize(w, dim):
+def getsize(w, dim=0):
     '''
     GETSIZE Dataset size and number of classes
 
@@ -3490,7 +3489,7 @@ def getsize(w, dim):
     DESCRIPTION
     Returns size of the dataset A and the number of classes. C is determined from the number of labels stored in A.LABLIST. If DIM = 1,2 or 3, just one of these numbers is returned, e.g. C = GETSIZE(A,3).
     '''
-    np_a = numpy.array(w.shape)
+    np_a = numpy.array(w).shape
 
     if dim == 1:
         s = np_a[0]
@@ -3498,6 +3497,8 @@ def getsize(w, dim):
         s = np_a[1]
     elif dim == 3:
         s = len(w.lablist())
+    elif dim == 0:
+        s = np_a
     else:
         raise ValueError('Illegal parameter value')
     return s
@@ -3585,7 +3586,7 @@ def gauss(n=50, u=numpy.zeros(n,1), g=eye(n), labtype='crisp'):
         V = V.real
         D = D.real
         D = max(D, 0)
-        a = [[a],[numpy.random.randn(n[i], k) * math.sqrt(D) * V + tile(u[i,:],(n[i], 1))]]
+        a = [[a],[numpy.random.randn(n[i], k) * math.sqrt(D) * V + numpy.tile(u[i,:],(n[i], 1))]]
 
     labels = genlab(n, lablist)
     a = prdataset(a, labels, 'lablist', lablist, 'prior', p)

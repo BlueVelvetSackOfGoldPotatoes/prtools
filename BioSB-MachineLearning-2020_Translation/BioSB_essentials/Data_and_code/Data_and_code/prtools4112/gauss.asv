@@ -135,7 +135,7 @@ function a = gauss(n,u,g,labtype)
 
 	a = [];
 	for i = 1:m
-		j = min(i,cg);						% Just in case CG `= 1 (if G was not specified).
+		j = min(i,cg);						% Just in case CG = 1 (if G was not specified).
 
 		% Sanity check: user can pass non-positive definite G.		
 		[V,D] = preig(g(:,:,j)); V = real(V); D = real(D); D = max(D,0);
