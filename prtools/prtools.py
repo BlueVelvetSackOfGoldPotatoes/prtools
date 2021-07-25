@@ -2847,35 +2847,7 @@ def featselb(task=None, x=None, w=None):
 
 
 # UNTESTED UNFINISHED DUE TO UNIMPLEMENTED METHOD DEPENDENCIES
-def laplace(n, m, mu, S):
-    ######################## MATLAB
-    function out = laplace (n, m, mu, S)
-
-        if (nargin < 1), n  = 1;          end;
-        if (nargin < 2), m  = n;          end;
-        if (nargin < 3), mu = zeros(1,m); end;
-    if (nargin < 4), S  = eye(m);     end;
-
-        out = myexprnd(1,n,m); 
-
-        % Convert exponential to Laplacian distributed data
-
-        for i = 1:n
-            for j = 1:m
-                if (rand(1,1) > 0.5)
-                    out(i,j) = -out(i,j);
-                end;
-            end;
-        end;
-
-        % Remove covariance
-        out = out * inv(sqrtm(cov(out)));
-
-        % Add in desired covariance and mean
-        out = out * sqrtm(S) + ones(n,1)*mu;
-
-    return
-    ########################
+def laplace(n=1, m=n, mu=numpy.zeros((1,m)), S=eye(m)):
     '''
     LAPLACE  Laplacian distributed random numbers.
 
@@ -2889,6 +2861,17 @@ def laplace(n, m, mu, S):
     
         LAPLACE with no arguments is a scalar whose value changes each time it is referenced. 
     '''
+    from numpy.linalg import inv
+    from scipy.linalg import sqrtm
+
+    out = myexprnd(1,n,m); # myexprn AND ITS METHOD DEPENDENCIES ARE NOT IMPLEMENTED YET
+    
+    for i in range(n):
+        for j in range(m):
+            if numpy.random.randn(1,1) > 0.5:
+                out[i][j] = -out[i][j]
+    out = out * inv(sqrtm(numpy.cov(out)))
+    out = out * sqrtm(S) + numpy.ones((n,1)) * mu
 
 # UNTESTED
 def lines5d(N=[50, 50, 50]):
