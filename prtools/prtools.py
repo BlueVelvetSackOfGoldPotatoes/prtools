@@ -2845,8 +2845,194 @@ def featselb(task=None, x=None, w=None):
 
 ############## New functions ##############
 
+# UNTESTED UNFINISHED DUE TO UNIMPLEMENTED METHOD (DEPENDENCIES)
+def gendatp():
+    ######################## MATLAB v    
+    function B = gendatp(A,N,s,G)
 
-# UNTESTED UNFINISHED DUE TO UNIMPLEMENTED METHOD DEPENDENCIES
+        prtrace(mfilename);
+
+        if (nargin < 1)
+            error('No dataset found');
+        end
+
+        A = dataset(A);
+        A = setlablist(A); % remove empty classes first
+
+        [m,k,c] = getsize(A);
+        p = getprior(A);
+        if (nargin < 2) 
+            prwarning(4,'Number of points not specified, 50 per class assumed.');
+            N = repmat(50,1,c); 
+        end
+        if (nargin < 3) 
+            prwarning(4,'Smoothing parameter(s) not specified, to be determined be an ML estimate.');
+            s = 0; 
+        end
+
+        if (length(s) == 1)
+            s = repmat(s,1,c);
+        end
+        if (length(s) ~= c)
+            error('Wrong number of smoothing parameters.')
+        end
+
+        if (nargin < 4)
+            prwarning(4,'Covariance matrices not specified, identity matrix assumed.');
+            covmat = 0; 			% covmat indicates whether a covariance matrix should be used
+                                                % 0 takes the identity matrix as the covariance matrix
+        else
+            covmat = 1;
+            if (ndims(G) == 2)
+                G = repmat(G,[1 1 c]);
+            end
+            if any(size(G) ~= [k k c])
+                error('Covariance matrix has a wrong size.')
+            end
+        end
+        
+        N = genclass(N,p);
+        lablist = getlablist(A);
+
+        B = [];
+        labels = [];
+        % Loop over classes.
+        for j=1:c
+            a = getdata(A,j);
+            a = dataset(a);
+            ma = size(a,1);
+            if (s(j) == 0)				% Estimate the smoothing parameter.
+                h = parzenml(a);
+            else
+                h = s(j);
+            end
+            if (~covmat)
+                b = a(ceil(rand(N(j),1) * ma),:) + randn(N(j),k).*repmat(h,N(j),k);
+            else 
+                b = a(ceil(rand(N(j),1) * ma),:) + ...
+                    gendatgauss(N(j),zeros(1,k),G(:,:,j)).*repmat(h,N(j),k);
+            end
+
+            B = [B;b];
+            labels = [labels; repmat(lablist(j,:),N(j),1)];
+        end
+        B = dataset(B,labels);
+        B = setprior(B,p);
+        B = set(B,'featlab',getfeatlab(A),'name',getname(A),'featsize',getfeatsize(A));	
+
+    return
+    ######################## MATLAB ^ 
+    '''
+    GENDATP Parzen density data generation
+    
+        B = GENDATP(A,N,S,G)
+    
+    INPUT
+        A  Dataset
+        N  Number(s) of points to be generated (optional; default: 50 per class)
+        S  Smoothing parameter(s) (optional; default: a maximum likelihood estimate based on A)
+        G  Covariance matrix used for generation of the data  (optional; default: the identity matrix)
+    
+    OUTPUT
+        B  Dataset of points generated according to Parzen density
+    
+    DESCRIPTION  
+        Generation of a dataset B of N points by using the Parzen estimate of the density of A based on a smoothing parameter S. N might be a row/column vector with different numbers for each class. Similarly, S might be a vector with different smoothing parameters for each class. If S = 0, then S is determined by a maximum likelihood estimate using PARZENML. If N is a vector, then exactly N(I) objects are generated for the class I. G is the covariance matrix to be used for generating the data. G may be a 3-dimensional matrix storing separate covariance matrices for each class.
+    '''
+
+# UNTESTED UNFINISHED DUE TO UNIMPLEMENTED METHOD (DEPENDENCIES)
+def gendatk():
+    ######################## MATLAB v
+    function B = gendatk(A,N,k,stdev)
+
+        prtrace(mfilename);
+
+        if (nargin < 4) 		
+            prwarning(3,'Standard deviation of the added Gaussian noise is not specified, assuming 1.');
+            stdev = 1; 
+        end
+        if (nargin < 3) 
+            prwarning(3,'Number of nearest neighbors to be used is not specified, assuming 1.');
+            k = 1; 
+        end
+        if (nargin < 2)
+            prwarning(3,'Number of samples to generate is not specified, assuming 50.');
+            N = [];   % This happens some lines below.
+        end
+        if (nargin < 1)
+            error('No dataset found.');
+        end
+
+        A = dataset(A);
+        A = setlablist(A); % remove empty classes first
+        [m,n,c] = getsize(A);
+        prior = getprior(A);
+        if isempty(N), 
+            N = repmat(50,1,c); 				% 50 samples are generated.  		
+        end
+        N = genclass(N,prior);				% Generate class frequencies according to the priors.			
+
+        lablist = getlablist(A);
+        B = [];
+        labels = [];
+        % Loop over classes.
+        for j=1:c
+            a = getdata(A,j); 					% The j-th class.
+            [D,I] = sort(distm(a)); 
+            I = I(2:k+1,:); 						% Indices of the K nearest neighbors.
+            alf = randn(k,N(j))*stdev;	% Normally distributed 'noise'.
+            nu = ceil(N(j)/size(a,1));	% It is possible that NU > 1 if many objects have to be generated. 
+            J = randperm(size(a,1));		
+            J = repmat(J,nu,1)';				
+            J = J(1:N(j));							% Combine the NU repetitions of J into one column vector.
+            b = zeros(N(j),n);
+
+            % Loop over features.
+            for f = 1:n
+                b(:,f) = a(J,f) + sum(( ( a(J,f)*ones(1,k) - ...
+                reshape(+a(I(:,J),f),k,N(j))' ) .* alf' )' /k, 1)';
+            end
+            B = [B;b];
+            labels = [labels; repmat(lablist(j,:),N(j),1)];
+        end
+
+        B = dataset(B,labels,'prior',A.prior);
+        %B = set(B,'featlab',getfeatlab(A),'name',getname(A),'featsize',getfeatsize(A));
+        %DXD. Added this exception, because else it's going to complain
+        %     that the name is not a string.
+        B = set(B,'featlab',getfeatlab(A),'featsize',getfeatsize(A));
+        if ~isempty(getname(A))
+            B = setname(B,getname(A));
+        end
+
+    return;
+    ######################## MATLAB ^
+    '''
+    GENDATK K-Nearest neighbor data generation
+    
+        B = GENDATK(A,N,K,S)
+    
+    INPUT
+        A  Dataset
+        N  Number of points (optional; default: 50)
+        K  Number of nearest neighbors (optional; default: 1)
+        S  Standard deviation (optional; default: 1)
+
+    OUTPUT
+        B  Generated dataset
+    
+    DESCRIPTION 
+        Generation of N points using the K-nearest neighbors of objects in the dataset A. First, N points of A are chosen in a random order. Next, to each of these points and for each direction (feature), a Gaussian-distributed 
+        offset is added with the zero mean and the standard deviation: S * the mean signed difference between the point of A under consideration and its K nearest neighbors in A. 
+        
+        The result of this procedure is that the generated  points follow the local density properties of the point from which they originate.
+        
+        If A is a multi-class dataset the above procedure is followed class by class, neglecting objects of other classes and possibly unlabeled objects.
+        
+        If N is a vector of sizes, exactly N(I) objects are generated for class I. Default N is 100 objects per class.
+    '''
+
+# UNTESTED UNFINISHED DUE TO UNIMPLEMENTED METHOD (DEPENDENCIES)
 def laplace(n=1, m=n, mu=numpy.zeros((1,m)), S=eye(m)):
     '''
     LAPLACE  Laplacian distributed random numbers.
@@ -2913,13 +3099,13 @@ def lines5d(N=[50, 50, 50]):
     a  = [a, [c2*s3 + (1-c2)*s4]]
     a  = [a, [c3*s5 + (1-c3)*s6]]
 
-    data = prdataset(a,genlab(N));
-    data = data.setname('5D Lines');
+    data = prdataset(a,genlab(N))
+    data = data.setname('5D Lines')
     return data
 
 # UNTESTED UNFINISHED DUE TO UNIMPLEMENTED METHOD DEPENDENCIES
 def gendatgauss(n, u, g, labtype):
-    ######################## MATLAB
+    ######################## MATLAB v
     function a = gendatgauss(n,u,g,labtype)
 
         prtrace(mfilename);
@@ -3024,7 +3210,7 @@ def gendatgauss(n, u, g, labtype):
         a = setname(a,'Gaussian Data');
 
     return
-    ########################
+    ######################## MATLAB ^
     '''
     GENDATGAUSS (Formerly GAUSS) Generation of a multivariate Gaussian dataset
  
@@ -3084,7 +3270,7 @@ def gendatgauss(n, u, g, labtype):
 
 # UNTESTED UNFINISHED DUE TO UNIMPLEMENTED METHOD DEPENDENCIES
 def gendatp(A,N,s,G):
-    ######################## MATLAB
+    ######################## MATLAB v
     function B = gendatp(A,N,s,G)
 
         prtrace(mfilename);
@@ -3158,7 +3344,7 @@ def gendatp(A,N,s,G):
         B = set(B,'featlab',getfeatlab(A),'name',getname(A),'featsize',getfeatsize(A));	
 
     return
-    ########################
+    ######################## MATLAB ^
     '''
     GENDATP Parzen density data generation
      
@@ -3188,7 +3374,7 @@ def gendatp(A,N,s,G):
 
 # UNTESTED UNFINISHED DUE TO UNIMPLEMENTED METHOD DEPENDENCIES
 def gendatk(A, N, K, stdev):
-    ######################## MATLAB
+    ######################## MATLAB v
     function B = gendatk(A,N,k,stdev)
 
         prtrace(mfilename);
@@ -3259,7 +3445,7 @@ def gendatk(A, N, K, stdev):
         end
 
     return;
-    ########################
+    ######################## MATLAB ^
     '''
     GENDATK K-Nearest neighbor data generation
     
@@ -3286,7 +3472,7 @@ def gendatk(A, N, K, stdev):
 
 # UNTESTED UNFINISHED DUE TO UNIMPLEMENTED METHOD DEPENDENCIES
 def nbayesc(u,g):
-    ######################## MATLAB
+    ######################## MATLAB v
     function W = nbayesc(U,G);
 
         prtrace(mfilename);
@@ -3312,7 +3498,7 @@ def nbayesc(u,g):
         W = setcost(W,U);
 
     return;
-    ########################
+    ######################## MATLAB ^
     '''
     NBAYESC Bayes Classifier for given normal densities
      
@@ -3347,7 +3533,7 @@ def nbayesc(u,g):
 
 # UNTESTED UNFINISHED DUE TO UNIMPLEMENTED METHOD DEPENDENCIES
 def setlabtype(a, type, labels):
-    ######################## MATLAB
+    ######################## MATLAB v
     [m,k,c] = getsize(a);
 
     a = addlablist(a);   % set up multiple labels if not yet done
@@ -3417,7 +3603,7 @@ def setlabtype(a, type, labels):
     end
     a.lablist{curn,4} = lower(type);
     a.labtype = lower(type);
-    ########################
+    ######################## MATLAB ^
     '''
     SETLABTYPE Reset label type of dataset
         A = SETLABTYPE(A,TYPE,LABELS)
