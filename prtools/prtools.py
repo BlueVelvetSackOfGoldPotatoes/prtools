@@ -2890,37 +2890,8 @@ def laplace(n, m, mu, S):
         LAPLACE with no arguments is a scalar whose value changes each time it is referenced. 
     '''
 
-# UNTESTED UNFINISHED DUE TO UNIMPLEMENTED METHOD DEPENDENCIES
-def lines5d(N):
-    ######################## MATLAB
-    function data = lines5d(N)
-            prtrace(mfilename);
-
-        if nargin< 1, N = [50 50 50]; end
-
-        N = genclass(N,ones(1,3)/3);
-        n1 = N(1);
-        n2 = N(2);
-        n3 = N(3);
-
-    s1 = [0 0 0 1 0];
-    s2 = [1 1 1 0 0];
-    s3 = [0 1 0 1 0];
-    s4 = [1 1 1 1 1];
-    s5 = [0 1 1 0 1];
-    s6 = [1 0 1 1 1];
-    c1 = [0:1/(n1-1):1]';
-    c2 = [0:1/(n2-1):1]';
-    c3 = [0:1/(n3-1):1]';
-    a  = c1*s1 + (1-c1)*s2;
-    a  = [a; c2*s3 + (1-c2)*s4];
-    a  = [a; c3*s5 + (1-c3)*s6];
-
-        data = dataset(a,genlab(N));
-        data = setname(data,'5D Lines');
-
-    return
-    ########################
+# UNTESTED
+def lines5d(N=[50, 50, 50]):
     '''
     %LINES5D  Generates three 5-dimensional lines
 
@@ -2930,6 +2901,38 @@ def lines5d(N):
 
     If N is a vector of sizes, exactly N(I) objects are generated for class I, I = 1,2.Default: N = [50 50 50].
     '''
+    N = genclass(N, numpy.ones(1,3)/3)
+    n1 = N[1]
+    n2 = N[2]
+    n3 = N[3]
+
+    s1 = [0, 0, 0, 1, 0]
+    s2 = [1, 1, 1, 0, 0]
+    s3 = [0, 1, 0, 1, 0]
+    s4 = [1, 1, 1, 1, 1]
+    s5 = [0, 1, 1, 0, 1]
+    s6 = [1, 0, 1, 1, 1]
+    
+    c1 = numpy.zeros(n1)
+    c1[0] = 0
+    c1[n1-1] = 1
+    c2 = c1
+    c3 = c1
+
+    for i in range(1, n1-1):
+        c1[i] = c1[i-1] + (1/(n1-1))
+    for i in range(1, n2-1):
+        c2[i] = c2[i-1] + (1/(n2-1))
+    for i in range(1, n3-1):
+        c3[i] = c3[i-1] + (1/(n3-1))
+
+    a  = c1*s1 + (1-c1)*s2
+    a  = [a, [c2*s3 + (1-c2)*s4]]
+    a  = [a, [c3*s5 + (1-c3)*s6]]
+
+    data = prdataset(a,genlab(N));
+    data = data.setname('5D Lines');
+    return data
 
 # UNTESTED UNFINISHED DUE TO UNIMPLEMENTED METHOD DEPENDENCIES
 def gendatgauss(n, u, g, labtype):
@@ -3446,18 +3449,27 @@ def setlabtype(a, type, labels):
     
     a = addlablist(a) # UNIMPLEMENTED METHOD CALL addlablist
     curn, curname, t0, t1 = curlablist(a) # UNIMPLEMENTED METHOD CALL curlablist
+    # Creation no type labels
     if a and type and labels:
         if type == "crisp" or type == "CRISP":
-            a.labtype = 'crisp'
+            a.targettype = 'crisp'
         elif type == "soft" or type == "SOFT":
-            a.labtype = 'soft'
+            a.targettype = 'soft'
         elif type == "targets" or type == "TARGETS":
-            a.labtype = 'targets'
+            a.targettype = 'targets'
         else:
             raise ValueError("Unknown label type: {}".format(type))
         return setlabels(a,labels)
-
     
+    # Convert to crisp
+    if type == "crisp" or type == "CRISP":
+        if a.targettype == "soft" or a.targettype == "targets":
+            nlaba = max(a.targets[:,t0:t1], [], 2)
+            mm = nlaba
+            # nlab() is not a setter, so what is matlab doing here calling a function and assigning a value to it like this??
+            a.nlab(:,curn) = nlaba-t0+1
+            a.targets(:,t0:t1) = []
+
 def extractClass(w, a):
     '''
     Input
