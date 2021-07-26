@@ -3090,6 +3090,7 @@ def laplace(n=1, m=n, mu=numpy.zeros((1,m)), S=eye(m)):
                 out[i][j] = -out[i][j]
     out = out * inv(sqrtm(numpy.cov(out)))
     out = out * sqrtm(S) + numpy.ones((n,1)) * mu
+    return out
 
 # UNTESTED
 def lines5d(N=[50, 50, 50]):
@@ -3581,25 +3582,20 @@ def extractClass(w, a):
 
     return row in data equal to class a.
     '''
+
     lab = w.lablist()
-    _, columns = lab.shape
     final_rows = []
 
     for r in lab:
         for c in r:
             if c == a:
-                print(r)
-                print()
-                print(numpy.array(r))
                 final_rows.append(r)
                 break
             
     final_rows = numpy.array(final_rows)
-    print(final_rows)
 
     return final_rows
 
-# UNTESTED
 def getsize(w, dim=0):
     '''
     GETSIZE Dataset size and number of classes
@@ -3632,7 +3628,6 @@ def getsize(w, dim=0):
     else:
         raise ValueError('Illegal parameter value')
     return s
-
 
 def preig(a):
     '''
@@ -3681,7 +3676,7 @@ def gauss(n=50, u=numpy.zeros(n,1), g=eye(n), labtype='crisp'):
        a = prdataset([])
        return a
     elif type(u) == 'numpy.ndarray' or type(u) == 'list':
-        m, k, c = getsize(u), getsize(u), getsize(u)
+        m, k, c = getsize(u)
         lablist = lablist(u)
         p = u.getprior()
 
