@@ -2941,9 +2941,9 @@ def gendatp():
     '''
 
 # UNTESTED UNFINISHED DUE TO UNIMPLEMENTED METHOD (DEPENDENCIES)
-def gendatk():
+def gendatk(A=NONE, N=[], k=1, stdev=1):
     ######################## MATLAB v
-    function B = gendatk(A,N,k,stdev)
+    function B = gendatk()
 
         prtrace(mfilename);
 
@@ -3031,6 +3031,38 @@ def gendatk():
         
         If N is a vector of sizes, exactly N(I) objects are generated for class I. Default N is 100 objects per class.
     '''
+    import numpy
+    import math
+    import numpy.matlib
+    from scipy.spatial import distance_matrix
+    
+    if type(a) == 'class NoneType':
+        raise NameError("Data set, A, is not defined!")
+
+    A = dataset(A)
+    A = setlablist(A) # setlablist has not been implemented yet!
+    m, n, c = getsize(A)
+    prior = getprior(A)
+
+    if len(N) == 0:
+        N = numpy.matlib.repmat(50, 1, c)
+    N = genclass(N, prior)
+    lablist = gelablist(A) # getlablist is not implemented yet!
+    B = []
+    labels = []
+    for i in range(c):
+        a = getdata(A,j) # getdata is not implemented yet!
+        a.sort()
+        D, I = spa.distance_matrix(a, a)
+        I = I[2:k+1,:]
+        alf = numpy.random.randn(k,N[j]) * stdev
+        nu = math.ceil(N[j] / getsize(a,1))
+        J = numpy.random.permutation(getsize(a,1))
+        J = numpy.matlib.repmat(J, nu, 1)
+        b = numpy.zeros(N[j], n)
+
+        for f in range(n):
+            b[:,f] = a[J,f] + sum()
 
 # UNTESTED UNFINISHED DUE TO UNIMPLEMENTED METHOD (DEPENDENCIES)
 def laplace(n=1, m=n, mu=numpy.zeros((1,m)), S=eye(m)):
@@ -3373,104 +3405,6 @@ def gendatp(A,N,s,G):
     '''
 
 # UNTESTED UNFINISHED DUE TO UNIMPLEMENTED METHOD DEPENDENCIES
-def gendatk(A, N, K, stdev):
-    ######################## MATLAB v
-    function B = gendatk(A,N,k,stdev)
-
-        prtrace(mfilename);
-
-        if (nargin < 4) 		
-            prwarning(3,'Standard deviation of the added Gaussian noise is not specified, assuming 1.');
-            stdev = 1; 
-        end
-        if (nargin < 3) 
-            prwarning(3,'Number of nearest neighbors to be used is not specified, assuming 1.');
-            k = 1; 
-        end
-        if (nargin < 2)
-            prwarning(3,'Number of samples to generate is not specified, assuming 50.');
-            N = [];   % This happens some lines below.
-        end
-        if (nargin < 1)
-            error('No dataset found.');
-        end
-
-        A = dataset(A);
-        A = setlablist(A); % remove empty classes first
-        [m,n,c] = getsize(A);
-        prior = getprior(A);
-        if isempty(N), 
-            N = repmat(50,1,c); 				% 50 samples are generated.  		
-        end
-        N = genclass(N,prior);				% Generate class frequencies according to the priors.			
-
-        lablist = getlablist(A);
-        B = [];
-        labels = [];
-        % Loop over classes.
-        for j=1:c
-            a = getdata(A,j); 					% The j-th class.
-            [D,I] = sort(distm(a)); 
-            I = I(2:k+1,:); 						% Indices of the K nearest neighbors.
-            alf = randn(k,N(j))*stdev;	% Normally distributed 'noise'.
-            nu = ceil(N(j)/size(a,1));	% It is possible that NU > 1 if many objects have to be generated. 
-            J = randperm(size(a,1));		
-            J = repmat(J,nu,1)';				
-            J = J(1:N(j));							% Combine the NU repetitions of J into one column vector.
-            b = zeros(N(j),n);
-
-            % Loop over features.
-            for f = 1:n
-        %      Take all objects given by J, consider feature F.
-        %      Their K nearest neighbors are given by I(:,J)
-        %      We reshape them as a N(j) by K matrix (N(j) is the length of J)
-        %      Compute all differences between them and the original objects
-        %      Multiply these differences by the std dev stored in alf
-        %      Transpose and sum over the K neighbors, normalize by K
-        %      Transpose again and add to the original objects 
-                b(:,f) = a(J,f) + sum(( ( a(J,f)*ones(1,k) - ...
-                                    reshape(+a(I(:,J),f),k,N(j))' ) .* alf' )' /k, 1)';
-            end
-            B = [B;b];
-            labels = [labels; repmat(lablist(j,:),N(j),1)];
-        end
-
-        B = dataset(B,labels,'prior',A.prior);
-        %B = set(B,'featlab',getfeatlab(A),'name',getname(A),'featsize',getfeatsize(A));
-        %DXD. Added this exception, because else it's going to complain
-        %     that the name is not a string.
-        B = set(B,'featlab',getfeatlab(A),'featsize',getfeatsize(A));
-        if ~isempty(getname(A))
-            B = setname(B,getname(A));
-        end
-
-    return;
-    ######################## MATLAB ^
-    '''
-    GENDATK K-Nearest neighbor data generation
-    
-    B = GENDATK(A,N,K,S)
-
-    INPUT
-    A  Dataset
-    N  Number of points (optional; default: 50)
-    K  Number of nearest neighbors (optional; default: 1)
-    S  Standard deviation (optional; default: 1)
-
-    OUTPUT
-        B  Generated dataset
-
-    DESCRIPTION 
-        Generation of N points using the K-nearest neighbors of objects in the  dataset A. First, N points of A are chosen in a random order. Next, to each  of these points and for each direction (feature), a Gaussian-distributed  offset is added with the zero mean and the standard deviation: S * the mean  signed difference between the point of A under consideration and its K nearest neighbors in A. 
-
-    The result of this procedure is that the generated  points follow the local density properties of the point from which they originate.
-
-    If A is a multi-class dataset the above procedure is followed class by class, neglecting objects of other classes and possibly unlabeled objects.
-
-    If N is a vector of sizes, exactly N(I) objects are generated for class I. Default N is 100 objects per class.
-    '''
-
-# UNTESTED UNFINISHED DUE TO UNIMPLEMENTED METHOD DEPENDENCIES
 def nbayesc(u,g):
     ######################## MATLAB v
     function W = nbayesc(U,G);
@@ -3740,6 +3674,8 @@ def gauss(n=50, u=numpy.zeros(n,1), g=eye(n), labtype='crisp'):
     # importing "cmath" for complex number operations
     import cmath
     import math
+    import numpy
+    import numpy.matlib
   
     if len(n) == 1 and n == 0:
        a = prdataset([])
@@ -3783,7 +3719,7 @@ def gauss(n=50, u=numpy.zeros(n,1), g=eye(n), labtype='crisp'):
         V = V.real
         D = D.real
         D = max(D, 0)
-        a = [[a],[numpy.random.randn(n[i], k) * math.sqrt(D) * V + numpy.tile(u[i,:],(n[i], 1))]]
+        a = [[a],[numpy.random.randn(n[i], k) * math.sqrt(D) * V + numpy.matlib.repmat(u[i,:],n[i], 1)]]
 
     labels = genlab(n, lablist)
     a = prdataset(a, labels, 'lablist', lablist, 'prior', p)
