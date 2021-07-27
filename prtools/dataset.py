@@ -171,6 +171,9 @@ class prdataset(object):
     def setname(name):
         self.name = name
 
+    def getname(self):
+        return self.name
+
     def nrclasses(self):
         ll = numpy.unique(self.targets)
         return len(ll)

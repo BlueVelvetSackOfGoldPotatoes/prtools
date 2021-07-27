@@ -2845,83 +2845,8 @@ def featselb(task=None, x=None, w=None):
 
 ############## New functions ##############
 
-# UNTESTED UNFINISHED DUE TO UNIMPLEMENTED METHOD (DEPENDENCIES)
-def gendatp():
-    ######################## MATLAB v    
-    function B = gendatp(A,N,s,G)
-
-        prtrace(mfilename);
-
-        if (nargin < 1)
-            error('No dataset found');
-        end
-
-        A = dataset(A);
-        A = setlablist(A); % remove empty classes first
-
-        [m,k,c] = getsize(A);
-        p = getprior(A);
-        if (nargin < 2) 
-            prwarning(4,'Number of points not specified, 50 per class assumed.');
-            N = repmat(50,1,c); 
-        end
-        if (nargin < 3) 
-            prwarning(4,'Smoothing parameter(s) not specified, to be determined be an ML estimate.');
-            s = 0; 
-        end
-
-        if (length(s) == 1)
-            s = repmat(s,1,c);
-        end
-        if (length(s) ~= c)
-            error('Wrong number of smoothing parameters.')
-        end
-
-        if (nargin < 4)
-            prwarning(4,'Covariance matrices not specified, identity matrix assumed.');
-            covmat = 0; 			% covmat indicates whether a covariance matrix should be used
-                                                % 0 takes the identity matrix as the covariance matrix
-        else
-            covmat = 1;
-            if (ndims(G) == 2)
-                G = repmat(G,[1 1 c]);
-            end
-            if any(size(G) ~= [k k c])
-                error('Covariance matrix has a wrong size.')
-            end
-        end
-        
-        N = genclass(N,p);
-        lablist = getlablist(A);
-
-        B = [];
-        labels = [];
-        % Loop over classes.
-        for j=1:c
-            a = getdata(A,j);
-            a = dataset(a);
-            ma = size(a,1);
-            if (s(j) == 0)				% Estimate the smoothing parameter.
-                h = parzenml(a);
-            else
-                h = s(j);
-            end
-            if (~covmat)
-                b = a(ceil(rand(N(j),1) * ma),:) + randn(N(j),k).*repmat(h,N(j),k);
-            else 
-                b = a(ceil(rand(N(j),1) * ma),:) + ...
-                    gendatgauss(N(j),zeros(1,k),G(:,:,j)).*repmat(h,N(j),k);
-            end
-
-            B = [B;b];
-            labels = [labels; repmat(lablist(j,:),N(j),1)];
-        end
-        B = dataset(B,labels);
-        B = setprior(B,p);
-        B = set(B,'featlab',getfeatlab(A),'name',getname(A),'featsize',getfeatsize(A));	
-
-    return
-    ######################## MATLAB ^ 
+# UNTESTED UNFINISHED DUE TO UNIMPLEMENTED METHOD (DEPENDENCIES: setlablist, getdata, parzenml, set)
+def gendatp(A=None, N=numpy.matlib.repmat(50, 1, getsize(A,3)), s=0, G=numpy.identity(max(getsize(A,1), getsize(A,2))):
     '''
     GENDATP Parzen density data generation
     
@@ -2939,6 +2864,62 @@ def gendatp():
     DESCRIPTION  
         Generation of a dataset B of N points by using the Parzen estimate of the density of A based on a smoothing parameter S. N might be a row/column vector with different numbers for each class. Similarly, S might be a vector with different smoothing parameters for each class. If S = 0, then S is determined by a maximum likelihood estimate using PARZENML. If N is a vector, then exactly N(I) objects are generated for the class I. G is the covariance matrix to be used for generating the data. G may be a 3-dimensional matrix storing separate covariance matrices for each class.
     '''
+    import numpy
+    import math
+    import numpy.matlib
+    from scipy.spatial import distance_matrix
+
+    if type(A) == 'class NoneType':
+       raise NameError("Data set, A, is not defined!")
+    
+    A = prdataset(A)
+    A = setlablist(A) # setlablist has not been implemented yet!
+
+    m, k, c = getsize(A)
+    p = prdataset.getprior(A)
+
+    if len(s) == 1:
+        s = numpy.matlib.repmat(s, 1, c)
+    if len(s) != c:
+        raise ValueError("Wrong number of smoothing parameters: expected {}, got {}".format(c, len(s)))
+
+    # If covariance matrices not specified, identity matrix assumed
+    covmatrix = numpy.identity(max(getsize(A,1), getsize(A,2))
+    # if covariance matrix is not the identity matrix
+    if G != covmatrix:
+        covmat_flag = 0
+        if numpy.ndim(G) == 2:
+            G = numpy.matlib.repmat(G, [1,1,c])
+        if G != [k, k, c]:
+            raise VelueError("Coariance matrix has wrong size: expected {}, got {}".format([k,k,c], getsize(G)))
+    else:
+        covmat_flag = 1
+
+    N = genclass(N, p)
+    lablist = prdataset.lablist(A)
+
+    B = []
+    labels = []
+    for j in range(c):
+        a = getdata(A,j) # getdata is not implemented yet
+        a = prdataset(a)
+        ma = getsize(a, 1)
+        if s[j] == 0:
+            h = parzenml(a) # parzenml is not implemented yet
+        else:
+            h = s[j]
+
+        # Missing gendatgauss
+        if not covmat:
+            b = numpy.multiply(a[math.ceil[numpy.random.randn(N[j], 1) * ma], :] + numpy.random.randn(N[j], k), numpy.matlib.repmat(h,N[j],k)
+
+        else:
+            b = numpy.multiply(a[math.ceil[numpy.random.randn(N[j], 1) * ma], :] + gendatgauss(N[j], numpy.zeros(1, k), G[:,:,j]), numpy.matlib.repmat(h,N[j],k)
+        B = [B,b]
+        labels = [labels, numpy.matlib.repmat(lablist[j,:], N[j], 1)]
+    B = prdataset(B, labels)
+    B = prdataset.prior(B,p)
+    B = set(B, 'featlab', getfeatlab(A), 'name', getname(A), 'featsize', getfeatsize(A)) # set is not defined - perhaps it is but distributed through dataset.py
 
 # UNTESTED UNFINISHED DUE TO UNIMPLEMENTED METHOD (DEPENDENCIES)
 def gendatk(A=NONE, N=[], k=1, stdev=1):
@@ -3298,111 +3279,6 @@ def gendatgauss(n, u, g, labtype):
         [1 1] and covariance matrices [2 1; 1 4], EYE(2) and EYE(2):
 
         GENDATGAUSS(300,[0 0; 0 1; 1 1]*3,CAT(3,[2 1; 1 4],EYE(2),EYE(2)))
-    '''
-
-
-# UNTESTED UNFINISHED DUE TO UNIMPLEMENTED METHOD DEPENDENCIES
-def gendatp(A,N,s,G):
-    ######################## MATLAB v
-    function B = gendatp(A,N,s,G)
-
-        prtrace(mfilename);
-
-        if (nargin < 1)
-            error('No dataset found');
-        end
-
-        A = dataset(A);
-        A = setlablist(A); % remove empty classes first
-
-        [m,k,c] = getsize(A);
-        p = getprior(A);
-        if (nargin < 2) 
-            prwarning(4,'Number of points not specified, 50 per class assumed.');
-            N = repmat(50,1,c); 
-        end
-        if (nargin < 3) 
-            prwarning(4,'Smoothing parameter(s) not specified, to be determined be an ML estimate.');
-            s = 0; 
-        end
-
-        if (length(s) == 1)
-            s = repmat(s,1,c);
-        end
-        if (length(s) ~= c)
-            error('Wrong number of smoothing parameters.')
-        end
-
-        if (nargin < 4)
-            prwarning(4,'Covariance matrices not specified, identity matrix assumed.');
-            covmat = 0; 			% covmat indicates whether a covariance matrix should be used
-                                                % 0 takes the identity matrix as the covariance matrix
-        else
-            covmat = 1;
-            if (ndims(G) == 2)
-                G = repmat(G,[1 1 c]);
-            end
-            if any(size(G) ~= [k k c])
-                error('Covariance matrix has a wrong size.')
-            end
-        end
-        
-        N = genclass(N,p);
-        lablist = getlablist(A);
-
-        B = [];
-        labels = [];
-        % Loop over classes.
-        for j=1:c
-            a = getdata(A,j);
-            a = dataset(a);
-            ma = size(a,1);
-            if (s(j) == 0)				% Estimate the smoothing parameter.
-                h = parzenml(a);
-            else
-                h = s(j);
-            end
-            if (~covmat)
-                b = a(ceil(rand(N(j),1) * ma),:) + randn(N(j),k).*repmat(h,N(j),k);
-            else 
-                b = a(ceil(rand(N(j),1) * ma),:) + ...
-                    gendatgauss(N(j),zeros(1,k),G(:,:,j)).*repmat(h,N(j),k);
-            end
-
-            B = [B;b];
-            labels = [labels; repmat(lablist(j,:),N(j),1)];
-        end
-        B = dataset(B,labels);
-        B = setprior(B,p);
-        B = set(B,'featlab',getfeatlab(A),'name',getname(A),'featsize',getfeatsize(A));	
-
-    return
-    ######################## MATLAB ^
-    '''
-    GENDATP Parzen density data generation
-     
-    B = GENDATP(A,N,S,G)
-     
-    INPUT
-        A  Dataset
-        N  Number(s) of points to be generated (optional; default: 50 per class)
-        S  Smoothing parameter(s) 
-            (optional; default: a maximum likelihood estimate based on A)
-        G  Covariance matrix used for generation of the data 
-            (optional; default: the identity matrix)
-    
-    OUTPUT
-        B  Dataset of points generated according to Parzen density
-    
-    DESCRIPTION  
-        Generation of a dataset B of N points by using the Parzen estimate of the
-        density of A based on a smoothing parameter S. N might be a row/column 
-        vector with different numbers for each class. Similarly, S might be 
-        a vector with different smoothing parameters for each class. If S = 0, 
-        then S is determined by a maximum likelihood estimate using PARZENML. 
-        If N is a vector, then exactly N(I) objects are generated for the class I. 
-        G is the covariance matrix to be used for generating the data. G may be 
-        a 3-dimensional matrix storing separate covariance matrices for each class.
     '''
 
 # UNTESTED UNFINISHED DUE TO UNIMPLEMENTED METHOD DEPENDENCIES
