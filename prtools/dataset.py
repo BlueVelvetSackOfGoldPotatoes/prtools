@@ -30,8 +30,7 @@ class prdataset(object):
 
     def __init__(self,data,targets=None):
         if isinstance(data,prdataset):
-            #self = copy.deepcopy(data) # why does this not work??
-            self.__dict__ = data.__dict__.copy()   # sigh..
+            self.__dict__ = data.__dict__.copy()
             return
         if not isinstance(data,(numpy.ndarray, numpy.generic)):
             data = numpy.array(data,ndmin=2)
@@ -43,7 +42,7 @@ class prdataset(object):
             assert (data.shape[0]==targets.shape[0]), \
                     'Number of targets does not match number of data samples.'
             if (len(targets.shape)<2):
-                targets = targets[:,numpy.newaxis]  # SIGH
+                targets = targets[:,numpy.newaxis]
         else:
             targets = numpy.zeros(data.shape[0])
         self.name = ''
@@ -127,26 +126,32 @@ class prdataset(object):
         newd.data /= other
         return newd
 
+    # Returns unique label objects
     def lablist(self):
         return numpy.unique(self.targets)
 
+    # Returns indexes of labels
     def nlab(self):
+        # Save values to ll and indexes to I
         (ll,I) = numpy.unique(self.targets,return_inverse=True)
         I = numpy.array(I)
-        I = I[:,numpy.newaxis] # python is so terrible..:-(
+        # Transpose indexes and return only these, even repeated ones
+        I = I[:,numpy.newaxis]
         return I
 
+    # Return a modified lab index list if there's only two classes
     def signlab(self,posclass=1):  # what is a good default?
         ll = self.lablist()
         if (len(ll)>2):
             raise ValueError('Labels +-1 only for two-class problems.')
         lab = self.nlab()
         if (posclass==0):
-            lab = 1-2.0*lab
+            lab = 1-2.0*lab # value 0 becomes 1 everything else is negative (decreased by 2)
         else:
-            lab = 2.0*lab-1
+            lab = 2.0*lab-1 # value 0 becomes -1 everything else is positive and increased by 1
         return lab
 
+    # Returns dataset with data as well as feature labels if shape gets misalign
     def setdata(self,data):
         self.data = data
         self.shape = data.shape
@@ -156,6 +161,7 @@ class prdataset(object):
                 self.featlab.append('Feature %d'%i)
         return self
 
+    # return number of objects of each unique classes (targets, or labels)
     def classsizes(self):
         if (self.targettype=='regression'):
             return None
@@ -168,21 +174,26 @@ class prdataset(object):
                 count[i] = numpy.sum(1.*(self.targets==ll[i]))
         return count
 
+    # Set dataset name
     def setname(name):
         self.name = name
-
+    
+    # Get dataset name
     def getname(self):
         return self.name
 
+    # Return number of unique classes in dataset
     def nrclasses(self):
         ll = numpy.unique(self.targets)
         return len(ll)
-
+        
+    # Return all objects of class cname
     def findclass(self,cname):
         ll = numpy.unique(self.targets)
         I = numpy.where(ll==cname)
         return I[0][0]
 
+    # Return item at key
     def __getitem__(self,key):
         newd = copy.deepcopy(self)
         # be resistant to 'tuples' that come out of (..).nonzero()
@@ -224,20 +235,22 @@ class prdataset(object):
         newd.shape = newd.data.shape
         return newd
 
+    # Set item at key
     def __setitem__(self,key,item):
         self.data[key] = item
 
+    # get prior 
     def getprior(self):
         if (len(self.prior)>0):
             return self.prior
         sz = self.classsizes()
         return sz/float(numpy.sum(sz))
 
+    # Concatenate two datasets
     def concatenate(self,other,axis=None):
         # Concatenate dataset with something else
         # If the axis is not given, try to infer from the sizes along
-        # which direction the concatenation should be performed. The
-        # first guess is along dimension 0:
+        # which direction the concatenation should be performed. The first guess is along dimension 0:
         if (axis is None):
             if (self.shape[1]==other.shape[1]):
                 axis = 0
@@ -259,6 +272,7 @@ class prdataset(object):
             raise ValueError("Concatenation is only possible along axis 0 or 1.")
         return out
 
+    # Sets target labels, regardless of them already existing
     def settargets(self,labelname,targets):
         # does the size match?
         if (len(targets.shape)==1):
@@ -268,13 +282,12 @@ class prdataset(object):
             targets = targets.transpose()
             if (targets.shape[0] != self.data.shape[0]):
                 raise ValueError("Number of targets does not match number of objects.")
-        # does labelname already exist?
+        # does labelname already exist? then overwrite
         if labelname in self._targetnames_:
-            # probably overwrite it:
             I = self._targetnames_.index(labelname)
             self._targets_[:,I:(I+1)] = targets
+        # add a new label:
         else:
-            # add a new label:
             if (len(self._targetnames_)>0):
                 self._targetnames_.append(labelname)
                 self._targets_ = numpy.append(self._targets_,targets,1)
@@ -284,6 +297,7 @@ class prdataset(object):
                 self._targetnames_ = labelname
                 self._targets_ = targets
 
+    # Returns object at labelname
     def gettargets(self,labelname):
         if labelname in self._targetnames_:
             I = self._targetnames_.index(labelname)
@@ -291,6 +305,7 @@ class prdataset(object):
         else:
             return None
 
+    # Prints targets with label I or all targets
     def showtargets(self,I=None):
         if I is None:
             if (len(self._targetnames_)>0):
@@ -304,11 +319,6 @@ class prdataset(object):
                 print("Cannot find targets ", I)
             else:
                 print(targets)
-
-
-
-
-
 
 # === useful functions =====================================
 def scatterd(a,clrs=None):
@@ -398,7 +408,7 @@ def fusion_graph(X, link):
 def seldat(x,cl):
     newd = copy.deepcopy(x)
     I = (x.nlab()==cl).nonzero()
-    return newd[I[0],:]   # grr, this python..
+    return newd[I[0],:]
 
 def genclass(n,p):
     "Generate class frequency distribution"
@@ -414,7 +424,7 @@ def genclass(n,p):
         raise ValueError('Probabilities do not add up to 1.')
     c = len(p)
     P = numpy.cumsum(p)
-    P = numpy.concatenate((numpy.zeros(1),P)) # I hate python
+    P = numpy.concatenate((numpy.zeros(1),P))
     z = numpy.zeros(c,dtype=int)
     x = numpy.random.rand(numpy.sum(n))
     for i in range(0,c):
@@ -423,16 +433,15 @@ def genclass(n,p):
 
 def genlab(n,lab):
     if (isinstance(n,int)):
-        n = [n]  # grrr Python...
+        n = [n]
     if (isinstance(lab,str)):
         lab = [lab]
     if (len(n)!=len(lab)):
         raise ValueError('Number of values in N should match number in lab')
     out = numpy.repeat(lab[0],n[0])
-    #out = numpy.tile(lab[0],[n[0],1])
     for i in range(1,len(n)):
         out=numpy.concatenate((out,numpy.repeat(lab[i],n[i])))
-        #out=numpy.concatenate((out,numpy.tile(lab[i],[n[i],1])))
+    
     return out
 
 def gendat(x,n,seed=None):

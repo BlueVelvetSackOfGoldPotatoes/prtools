@@ -2844,8 +2844,12 @@ def featselb(task=None, x=None, w=None):
         raise ValueError("Task '%s' is *not* defined for feature selection."%task)
 
 ############## New functions ##############
-
 # UNTESTED UNFINISHED DUE TO UNIMPLEMENTED METHOD (DEPENDENCIES: setlablist, getdata, parzenml, set)
+import numpy
+import math
+import numpy.matlib
+from scipy.spatial import distance_matrix
+
 def gendatp(A=None, N=numpy.matlib.repmat(50, 1, getsize(A,3)), s=0, G=numpy.identity(max(getsize(A,1), getsize(A,2))):
     '''
     GENDATP Parzen density data generation
@@ -2864,11 +2868,6 @@ def gendatp(A=None, N=numpy.matlib.repmat(50, 1, getsize(A,3)), s=0, G=numpy.ide
     DESCRIPTION  
         Generation of a dataset B of N points by using the Parzen estimate of the density of A based on a smoothing parameter S. N might be a row/column vector with different numbers for each class. Similarly, S might be a vector with different smoothing parameters for each class. If S = 0, then S is determined by a maximum likelihood estimate using PARZENML. If N is a vector, then exactly N(I) objects are generated for the class I. G is the covariance matrix to be used for generating the data. G may be a 3-dimensional matrix storing separate covariance matrices for each class.
     '''
-    import numpy
-    import math
-    import numpy.matlib
-    from scipy.spatial import distance_matrix
-
     if type(A) == 'class NoneType':
        raise NameError("Data set, A, is not defined!")
     
@@ -3117,7 +3116,7 @@ def lines5d(N=[50, 50, 50]):
     data = data.setname('5D Lines')
     return data
 
-# UNTESTED UNFINISHED DUE TO UNIMPLEMENTED METHOD DEPENDENCIES
+# UNTESTED UNFINISHED
 def gendatgauss(n, u, g, labtype):
     ######################## MATLAB v
     function a = gendatgauss(n,u,g,labtype)
