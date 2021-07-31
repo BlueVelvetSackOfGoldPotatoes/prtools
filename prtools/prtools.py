@@ -2844,13 +2844,339 @@ def featselb(task=None, x=None, w=None):
         raise ValueError("Task '%s' is *not* defined for feature selection."%task)
 
 ############## New functions ##############
-# UNTESTED UNFINISHED DUE TO UNIMPLEMENTED METHOD (DEPENDENCIES: setlablist, getdata, parzenml, set)
+
+############ MATLAB
+	prtrace(mfilename);
+	
+	if nargin < 2, fid = []; end
+
+	if isdouble(A), A = dataset(A); end
+	
+	A = testdatasize(A);	
+	A = testdatasize(A,'objects');
+
+	if islabtype(A,'crisp')
+		h = parzenmlc(A,fid);
+	elseif islabtype(A,'soft')
+		h = parzenmls(A,fid);
+	else
+		error('Label type should be either ''crisp'' or ''soft''')
+	end
+	
+	return
+	
+function h = parzenmlc(A,fid) %crisp version
+
+	[m,k] = size(A);
+	DD= distm(+A) + diag(1e70*ones(1,m));
+	E = min(DD);
+	
+	h1 = sqrt(max(E));    % initial estimate of h
+	F1 = derlc(DD,E,h1,k); % derivative
+
+	prprogress(fid,'parzenml:\n');
+	prprogress(fid,' %6.4f   %6.3e\n',h1,F1);
+	if abs(F1) < 1e-70 
+		h = h1;
+		prwarning(4,'jump out\n');
+		return;
+	end
+	
+	a1 = (F1+m*k)*h1*h1;
+	h2 = sqrt(a1/(m*k));  % second guess
+	F2 = derlc(DD,E,h2,k); % derivative
+
+	prprogress(fid,' %6.4f   %6.3e\n',h2,F2);
+	if (abs(F2) < 1e-70) | (abs(1e0-h1/h2) < 1e-6) 
+		h = h2;
+		prwarning(4,'jump out\n');
+		return
+	end
+	
+	% find zero-point of derivative to optimize h^2
+	% stop if improvement is small, or h does not change significantly
+	
+	alf = 1;
+	prwaitbar(100,'parzenml: Optimizing smoothing parameter',m > 100)
+	iter = 0;
+	while abs(1e0-F2/F1) > 1e-4 & abs(1e0-h2/h1) > 1e-3 & abs(F2) > 1e-70
+		iter = iter+1;
+		h3 = (h1*h1*h2*h2)*(F2-F1)/(F2*h2*h2-F1*h1*h1);
+		if h3 < 0 % this should not happen
+			h3 = sqrt((F2+m*k)*h2*h2/(m*k));
+		else
+			h3 = sqrt(h3);
+		end
+		prwaitbar(100,100-100*exp(-iter/10));
+		h3 = h2 +alf*(h3-h2);
+		F3 = derlc(DD,E,h3,k);
+		prprogress(fid,' %6.4f   %6.3e\n',h3,F3);
+		F1 = F2; F2 = F3;
+		h1 = h2; h2 = h3;
+		alf = alf*0.99; % decrease step size
+	end
+	h = h2;
+	prwaitbar(0);
+
+return
+
+function F = derlc(DD,E,h,k)
+
+		Y = (DD-repmat(E,m,1))/(2*h*h); % correct for minimum distance to save accuracy
+	warning on MATLAB:divideByZero;
+	IY = find(Y<20);                % take small distance only, others don't contribute
+	P = zeros(m,m);
+	P(IY) = exp(-Y(IY));
+	PP = sum(P,2)';
+	FU = repmat(realmax,1,m);
+	J = find(PP~=0); 
+	FU(J) = 1./PP(J);
+	FF = sum(DD.*P,2);
+	warning off MATLAB:divideByZero;
+		F = (FU*FF)./(h*h) - m*k;
+	warning on MATLAB:divideByZero;
+return
+
+
+function h = parzenmls(A,fid) %soft version
+
+	SS = gettargets(setlabtype(A,'soft'));
+	[m,k,c] = getsize(A);
+	DD= distm(+A) + diag(1e70*ones(1,m));
+	E = min(DD);
+	h = zeros(c,1);
+	h0 = sqrt(max(E));    % initial estimate of h
+	
+	
+	s = sprintf('parzenml: runover classes');
+	prwaitbar(c,s,m > 100);
+	iter = 0;
+	
+	for j=1:c
+		prwaitbar(c,j)
+		S = SS(:,j);
+		h1 = h0;
+		F1 = derls(DD,E,h1,k,S); % derivative
+
+	  prprogress(fid,'parzenml: class %i : \n',j);
+		prprogress(fid,' %6.4f   %6.3e\n',h1,F1);
+		if abs(F1) < 1e-70 
+			h(j) = h1;
+			prwarning(4,'jump out\n');
+			break;
+		end
+	
+		a1 = (F1+m*k)*h1*h1;
+		h2def distance_matrix(A, B, squared=False):
+    """
+    Compute all pairwise distances between vectors in A and B.
+
+    Parameters
+    ----------
+    A : np.array
+        shape should be (M, K)
+    B : np.array
+        shape should be (N, K)
+
+    Returns
+    -------
+    D : np.array
+        A matrix D of shape (M, N).  Each entry in D i,j represnets the
+        distance between row i in A and row j in B.
+
+    See also
+    --------
+    A more generalized version of the distance matrix is available from
+    scipy (https://www.scipy.org) using scipy.spatial.distance_matrix,
+    which also gives a choice for p-norm.
+    """
+    M = A.shape[0]
+    N = B.shape[0]
+
+    assert A.shape[1] == B.shape[1], f"The number of components for vectors in A \
+        {A.shape[1]} does not match that of B {B.shape[1]}!"
+
+    A_dots = (A*A).sum(axis=1).reshape((M,1))*np.ones(shape=(1,N))
+    B_dots = (B*B).sum(axis=1)*np.ones(shape=(M,1))
+    D_squared =  A_dots + B_dots -2*A.dot(B.T)
+
+    if squared == False:
+        zero_mask = np.less(D_squared, 0.0)
+        D_squared[zero_mask] = 0.0
+        return np.sqrt(D_squared)
+
+    return D_squaredfind zero-point of derivative to optimize h^2
+		% stop if improvement is small, or h does not change significantly
+	
+		
+		prwaitbar(100,'parzenml: Optimizing smoothing parameter',m > 100)
+		iter = 0;
+		alf = 1;
+		while abs(1e0-F2/F1) > 1e-4 & abs(1e0-h2/h1) > 1e-3 & abs(F2) > 1e-70
+			iter = iter+1;
+			prwaitbar(100,100-100*exp(-iter/10));
+			h3 = (h1*h1*h2*h2)*(F2-F1)/(F2*h2*h2-F1*h1*h1);
+			if h3 < 0 % this should not happen
+				h3 = sqrt((F2+m*k)*h2*h2/(m*k));
+			else
+				h3 = sqrt(h3);
+			end
+			h3 = h2 +alf*(h3-h2);
+			F3 = derls(DD,E,h3,k,S);
+			prprogress(fid,' %6.4f   %6.3e\n',h3,F3);
+			F1 = F2; F2 = F3;
+			h1 = h2; h2 = h3;
+			alf = alf*0.99; % decrease step size
+		end
+		prwaitbar(0)
+		h(j) = h2;
+	end
+  prwaitbar(0)
+return
+
+function F = derls(DD,E,h,k,S) %soft version
+	% computation of the likelihood derivative for Parzen density
+	% given distances D and their object minima E (for increased accuracy)
+	% S are the object weigths
+	c = size(S,2);                  % number of classes
+	m = size(DD,1);
+	Y = (DD-repmat(E,m,1))/(2*h*h); % correct for minimum distance to save accuracy
+	IY = find(Y<20);                % take small distance only, others don't contribute
+	F = 0;
+	for j=1:c
+		P = zeros(m,m);
+		P(IY) = exp(-Y(IY));
+		PP = S(:,j)'*P';
+		FU = repmat(realmax,1,m);
+		J = find(PP~=0);  
+		FU(J) = S(J,j)'./PP(J);
+		K = find(S(:,j)==0);
+		FU(K) = zeros(1,length(K));
+		FF = (DD.*P)*S(:,j);
+		F = F + (FU*FF)./(h*h);
+	end
+	F = F - sum(S(:))*k;
+return
+############ END MATLAB
+
+# UNTESTED UNFINISHED DUE TO UNIMPLEMENTED METHOD (DEPENDENCIES:)
+def parzenml_vector(A=None, fid=[]):
+    '''
+    PARZENML Optimum smoothing parameter in Parzen density estimation.
+    
+       H = PARZENML(A)
+     
+        INPUT	
+            A   Input dataset
+    
+        OUTPUT
+            H   Vector with smoothing parameters
+    
+        DESCRIPTION
+            Maximum likelihood estimation for the smoothing parameter H in the Parzen denstity estimation of the data in A. A leave-one out maximum likelihood estimation is used. 
+
+            The dataset A can either be crisp or soft labeled. In case of crisp labeling the class information is not used and a single smoothing parameter is estimated. In case of soft labels a smoothing parameter for every class is estimated and objects are weighted in relation to their class weigthts (soft label value). It may be profitable to scale the data before calling it. eg.  WS = SCALEM(A,'variance'); A = A*WS.
+    '''
+    if type(A) == 'class NoneType':
+        raise NameError("Data set, A, is not defined!")
+
+import numpy
+import sys # for largest float
+import numpy.matlib
+
+def derlc(DD,E,h,k):
+    '''
+    Computation of the likelihood derivative for Parzen density
+	given distances D and their object minima E (for increased accuracy)
+    '''
+    m = size(DD,1);
+	Y = (DD-numpy.matlib.repmat(E,m,1))/(2*h*h) if h != 0 else 0 # division by 0
+	IY = numpy.where(Y<20)
+	P = numpy.zeros((m,m))
+	P[IY] = numpy.exp(-Y[IY])
+	PP = numpy.sum(P,axis=1)
+	FU = numpy.repmat(sys.float_info.max,1,m)
+	J = numpy.where(PP!=0);
+	FU[J] = 1/PP[J]
+	FF = numpy.sum(DD*P, axis=1)
+    F = (FU*FF)/(h*h) - m*k if h != 0 else 0 - m*k # division by 0
+
+    return F
+
+import scipy
+from scipy.spatial import matrix_distance
+from scipy.spatial import distance
+import numpy
+
+def parzenml_scalar(A=None, fid=[]):
+    '''
+    PARZENML Optimum smoothing parameter in Parzen density estimation.
+    
+       H = PARZENML(A)
+     
+        INPUT	
+            A   Input dataset
+    
+        OUTPUT
+            H   Scalar smoothing parameter
+
+    
+        DESCRIPTION
+            Maximum likelihood estimation for the smoothing parameter H in the Parzen denstity estimation of the data in A. A leave-one out maximum likelihood estimation is used. 
+
+            The dataset A can either be crisp or soft labeled. In case of crisp labeling the class information is not used and a single smoothing parameter is estimated. In case of soft labels a smoothing parameter for every class is estimated and objects are weighted in relation to their class weigthts (soft label value). It may be profitable to scale the data before calling it. eg.  WS = SCALEM(A,'variance'); A = A*WS.
+    '''
+    if type(A) == 'class NoneType':
+        raise NameError("Data set, A is not defined!")
+    m,k = getsize(A,1), getsize(A,2)
+    # Euclidean distance
+    DD =  scipy.spatial.distance_matrix(A, A)
+    # squared form
+    DD =  scipy.spatial.distance.squareform(DD) + numpy.diag(1e70*numpy.ones((1,m))
+    E = min(DD)
+
+    h1 = sqrt(max(E))
+    F1 = derlc(DD, E, h1, k)
+
+    if abs(F1) < 1e-70:
+        h = h1
+        return h
+    
+    a1 = (F1+m*k)*h1*h1
+    h2 = sqrt(a1/(m*k))
+	F2 = derlc(DD,E,h2,k)
+
+    if abs(F2) < 1e-70 or abs(1e0-h1/h2 < 1e-6:
+        h = h2
+        return h
+
+    # Find zero-point of derivative to optimize h^2 stop if improvement is small, or h does not change significantly.
+    alf = 1
+    iter = 0
+    while abs(1e0-F2/F1) > 1e-4 and abs(1e0-h2/h1) > 1e-3 and abs(F2) > 1e-70:
+		iter = iter+1
+		h3 = (h1*h1*h2*h2)*(F2-F1)/(F2*h2*h2-F1*h1*h1)
+		if h3 < 0:
+			h3 = sqrt((F2+m*k)*h2*h2/(m*k))
+		else:
+			h3 = sqrt(h3)
+
+		h3 = h2 + alf*(h3-h2)
+		F3 = derlc(DD,E,h3,k)
+		F1 = F2
+        F2 = F3
+		h1 = h2
+        h2 = h3
+		alf = alf*0.99
+        
+    return h2
+# UNTESTED UNFINISHED DUE TO UNIMPLEMENTED METHOD (DEPENDENCIES: parzenml)
 import numpy
 import math
 import numpy.matlib
 from scipy.spatial import distance_matrix
 
-def gendatp(A=None, N=numpy.matlib.repmat(50, 1, getsize(A,3)), s=0, G=numpy.identity(max(getsize(A,1), getsize(A,2))):
+def gendatp(A=None, N=50*nrclasses(A), s=0, G=numpy.identity(max(getsize(A,1), getsize(A,2)))):
     '''
     GENDATP Parzen density data generation
     
@@ -2869,13 +3195,10 @@ def gendatp(A=None, N=numpy.matlib.repmat(50, 1, getsize(A,3)), s=0, G=numpy.ide
         Generation of a dataset B of N points by using the Parzen estimate of the density of A based on a smoothing parameter S. N might be a row/column vector with different numbers for each class. Similarly, S might be a vector with different smoothing parameters for each class. If S = 0, then S is determined by a maximum likelihood estimate using PARZENML. If N is a vector, then exactly N(I) objects are generated for the class I. G is the covariance matrix to be used for generating the data. G may be a 3-dimensional matrix storing separate covariance matrices for each class.
     '''
     if type(A) == 'class NoneType':
-       raise NameError("Data set, A, is not defined!")
-    
-    A = prdataset(A)
-    A = setlablist(A) # setlablist has not been implemented yet!
+       raise NameError("Data set, {}, is not defined!".format(A))
 
     m, k, c = getsize(A)
-    p = prdataset.getprior(A)
+    p = A.getprior()
 
     if len(s) == 1:
         s = numpy.matlib.repmat(s, 1, c)
@@ -2884,23 +3207,24 @@ def gendatp(A=None, N=numpy.matlib.repmat(50, 1, getsize(A,3)), s=0, G=numpy.ide
 
     # If covariance matrices not specified, identity matrix assumed
     covmatrix = numpy.identity(max(getsize(A,1), getsize(A,2))
+
     # if covariance matrix is not the identity matrix
     if G != covmatrix:
         covmat_flag = 0
         if numpy.ndim(G) == 2:
             G = numpy.matlib.repmat(G, [1,1,c])
-        if G != [k, k, c]:
+        if getsize(G, 1) != k or getsize(G, 2) != k or getsize(G, 3) != c:
             raise VelueError("Coariance matrix has wrong size: expected {}, got {}".format([k,k,c], getsize(G)))
     else:
         covmat_flag = 1
 
     N = genclass(N, p)
-    lablist = prdataset.lablist(A)
-
+    lablist = A.lablist()
     B = []
     labels = []
+
     for j in range(c):
-        a = getdata(A,j) # getdata is not implemented yet
+        a = __getitem__(A, j)
         a = prdataset(a)
         ma = getsize(a, 1)
         if s[j] == 0:
@@ -2917,11 +3241,13 @@ def gendatp(A=None, N=numpy.matlib.repmat(50, 1, getsize(A,3)), s=0, G=numpy.ide
         B = [B,b]
         labels = [labels, numpy.matlib.repmat(lablist[j,:], N[j], 1)]
     B = prdataset(B, labels)
-    B = prdataset.prior(B,p)
-    B = set(B, 'featlab', getfeatlab(A), 'name', getname(A), 'featsize', getfeatsize(A)) # set is not defined - perhaps it is but distributed through dataset.py
+    B.prior = p
+    B.setname(A.getname())
+
+    return B
 
 # UNTESTED UNFINISHED DUE TO UNIMPLEMENTED METHOD (DEPENDENCIES)
-def gendatk(A=NONE, N=[], k=1, stdev=1):
+def gendatk(A=None, N=[], k=1, stdev=1):
     ######################## MATLAB v
     function B = gendatk()
 

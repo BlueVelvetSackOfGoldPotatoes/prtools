@@ -161,7 +161,7 @@ class prdataset(object):
                 self.featlab.append('Feature %d'%i)
         return self
 
-    # return number of objects of each unique classes (targets, or labels)
+    # Return number of objects of each unique classes (targets, or labels)
     def classsizes(self):
         if (self.targettype=='regression'):
             return None
@@ -184,7 +184,11 @@ class prdataset(object):
 
     # Return number of unique classes in dataset
     def nrclasses(self):
-        ll = numpy.unique(self.targets)
+        # ADDED - UNTESTED
+        if not isinstance(self,prdataset):
+                raise TypeError('Invalid data format!')
+        else:
+            ll = numpy.unique(self.targets)
         return len(ll)
         
     # Return all objects of class cname
