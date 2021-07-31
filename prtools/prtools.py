@@ -2920,24 +2920,6 @@ function h = parzenmlc(A,fid) %crisp version
 
 return
 
-function F = derlc(DD,E,h,k)
-
-		Y = (DD-repmat(E,m,1))/(2*h*h); % correct for minimum distance to save accuracy
-	warning on MATLAB:divideByZero;
-	IY = find(Y<20);                % take small distance only, others don't contribute
-	P = zeros(m,m);
-	P(IY) = exp(-Y(IY));
-	PP = sum(P,2)';
-	FU = repmat(realmax,1,m);
-	J = find(PP~=0); 
-	FU(J) = 1./PP(J);
-	FF = sum(DD.*P,2);
-	warning off MATLAB:divideByZero;
-		F = (FU*FF)./(h*h) - m*k;
-	warning on MATLAB:divideByZero;
-return
-
-
 function h = parzenmls(A,fid) %soft version
 
 	SS = gettargets(setlabtype(A,'soft'));
@@ -2945,21 +2927,16 @@ function h = parzenmls(A,fid) %soft version
 	DD= distm(+A) + diag(1e70*ones(1,m));
 	E = min(DD);
 	h = zeros(c,1);
-	h0 = sqrt(max(E));    % initial estimate of h
+	h0 = sqrt(max(E))
 	
-	
-	s = sprintf('parzenml: runover classes');
-	prwaitbar(c,s,m > 100);
 	iter = 0;
 	
 	for j=1:c
 		prwaitbar(c,j)
 		S = SS(:,j);
 		h1 = h0;
-		F1 = derls(DD,E,h1,k,S); % derivative
+		F1 = derls(DD,E,h1,k,S);
 
-	  prprogress(fid,'parzenml: class %i : \n',j);
-		prprogress(fid,' %6.4f   %6.3e\n',h1,F1);
 		if abs(F1) < 1e-70 
 			h(j) = h1;
 			prwarning(4,'jump out\n');
@@ -2967,45 +2944,17 @@ function h = parzenmls(A,fid) %soft version
 		end
 	
 		a1 = (F1+m*k)*h1*h1;
-		h2def distance_matrix(A, B, squared=False):
-    """
-    Compute all pairwise distances between vectors in A and B.
+		h2 = sqrt(a1/(m*k));  % second guess
+		F2 = derls(DD,E,h2,k,S); % derivative
 
-    Parameters
-    ----------
-    A : np.array
-        shape should be (M, K)
-    B : np.array
-        shape should be (N, K)
-
-    Returns
-    -------
-    D : np.array
-        A matrix D of shape (M, N).  Each entry in D i,j represnets the
-        distance between row i in A and row j in B.
-
-    See also
-    --------
-    A more generalized version of the distance matrix is available from
-    scipy (https://www.scipy.org) using scipy.spatial.distance_matrix,
-    which also gives a choice for p-norm.
-    """
-    M = A.shape[0]
-    N = B.shape[0]
-
-    assert A.shape[1] == B.shape[1], f"The number of components for vectors in A \
-        {A.shape[1]} does not match that of B {B.shape[1]}!"
-
-    A_dots = (A*A).sum(axis=1).reshape((M,1))*np.ones(shape=(1,N))
-    B_dots = (B*B).sum(axis=1)*np.ones(shape=(M,1))
-    D_squared =  A_dots + B_dots -2*A.dot(B.T)
-
-    if squared == False:
-        zero_mask = np.less(D_squared, 0.0)
-        D_squared[zero_mask] = 0.0
-        return np.sqrt(D_squared)
-
-    return D_squaredfind zero-point of derivative to optimize h^2
+		prprogress(fid,' %6.4f   %6.3e\n',h2,F2);
+		if (abs(F2) < 1e-70) | (abs(1e0-h1/h2) < 1e-6) 
+			h(j) = h2;
+			prwarning(4,'jump out\n');
+			break;
+		end
+	
+		% find zero-point of derivative to optimize h^2
 		% stop if improvement is small, or h does not change significantly
 	
 		
@@ -3035,13 +2984,6 @@ function h = parzenmls(A,fid) %soft version
 return
 
 function F = derls(DD,E,h,k,S) %soft version
-	% computation of the likelihood derivative for Parzen density
-	% given distances D and their object minima E (for increased accuracy)
-	% S are the object weigths
-	c = size(S,2);                  % number of classes
-	m = size(DD,1);
-	Y = (DD-repmat(E,m,1))/(2*h*h); % correct for minimum distance to save accuracy
-	IY = find(Y<20);                % take small distance only, others don't contribute
 	F = 0;
 	for j=1:c
 		P = zeros(m,m);
@@ -3058,6 +3000,30 @@ function F = derls(DD,E,h,k,S) %soft version
 	F = F - sum(S(:))*k;
 return
 ############ END MATLAB
+
+def derls(DD,E,h,k, S):
+    '''
+    Computation of the likelihood derivative for Parzen density
+	given distances D and their object minima E (for increased accuracy) S are the object weights.
+    '''
+    c = getsize(S,2)
+    m = getsize(DD,1);
+	Y = (DD-numpy.matlib.repmat(E,m,1))/(2*h*h) if h != 0 else 0 # division by 0
+	IY = numpy.where(Y<20)
+    F = 0
+    for j in range(c):
+        P = numpy.zeros((m,m))
+        P[IY] = numpy.exp(-Y[IY])
+        PP = S[:,j]
+        P_transpose = P.getH()
+        PP = PP.getH()*P_transpose
+        FU = numpy.repmat(sys.float_info.max,1,m)
+        J = numpy.where(PP!=0);
+        FU[J] = S[J,j]
+        FF = numpy.sum(DD*P, axis=1)
+        F = (FU*FF)/(h*h) - m*k if h != 0 else 0 - m*k # division by 0
+
+    return F
 
 # UNTESTED UNFINISHED DUE TO UNIMPLEMENTED METHOD (DEPENDENCIES:)
 def parzenml_vector(A=None, fid=[]):
@@ -3077,8 +3043,59 @@ def parzenml_vector(A=None, fid=[]):
 
             The dataset A can either be crisp or soft labeled. In case of crisp labeling the class information is not used and a single smoothing parameter is estimated. In case of soft labels a smoothing parameter for every class is estimated and objects are weighted in relation to their class weigthts (soft label value). It may be profitable to scale the data before calling it. eg.  WS = SCALEM(A,'variance'); A = A*WS.
     '''
-    if type(A) == 'class NoneType':
-        raise NameError("Data set, A, is not defined!")
+   if type(A) == 'class NoneType':
+        raise NameError("Data set, A is not defined!")
+    
+    SS = A.lablist()
+    m,k,c = getsize(A,0)
+    # Euclidean distance
+    DD =  scipy.spatial.distance_matrix(A, A)
+    # squared form
+    DD =  scipy.spatial.distance.squareform(DD) + numpy.diag(1e70*numpy.ones((1,m))
+    E = min(DD)
+    h = numpy.zeros((c,1))
+    h0 = sqrt(max(E))
+
+    for j in range(c):
+        S = SS[:,j]
+        h1 = h0
+        F1 = derls(DD,E,h1,k,S)
+
+    h1 = sqrt(max(E))
+    F1 = derlc(DD, E, h1, k)
+
+    if abs(F1) < 1e-70:
+        h = h1
+        return h
+    
+    a1 = (F1+m*k)*h1*h1
+    h2 = sqrt(a1/(m*k))
+	F2 = derlc(DD,E,h2,k)
+
+    if abs(F2) < 1e-70 or abs(1e0-h1/h2 < 1e-6:
+        h = h2
+        return h
+
+    # Find zero-point of derivative to optimize h^2 stop if improvement is small, or h does not change significantly.
+    alf = 1
+    iter = 0
+    while abs(1e0-F2/F1) > 1e-4 and abs(1e0-h2/h1) > 1e-3 and abs(F2) > 1e-70:
+		iter = iter+1
+		h3 = (h1*h1*h2*h2)*(F2-F1)/(F2*h2*h2-F1*h1*h1)
+		if h3 < 0:
+			h3 = sqrt((F2+m*k)*h2*h2/(m*k))
+		else:
+			h3 = sqrt(h3)
+
+		h3 = h2 + alf*(h3-h2)
+		F3 = derlc(DD,E,h3,k)
+		F1 = F2
+        F2 = F3
+		h1 = h2
+        h2 = h3
+		alf = alf*0.99
+
+    return h2
 
 import numpy
 import sys # for largest float
@@ -3089,7 +3106,7 @@ def derlc(DD,E,h,k):
     Computation of the likelihood derivative for Parzen density
 	given distances D and their object minima E (for increased accuracy)
     '''
-    m = size(DD,1);
+    m = getsize(DD,1);
 	Y = (DD-numpy.matlib.repmat(E,m,1))/(2*h*h) if h != 0 else 0 # division by 0
 	IY = numpy.where(Y<20)
 	P = numpy.zeros((m,m))
@@ -3168,9 +3185,9 @@ def parzenml_scalar(A=None, fid=[]):
 		h1 = h2
         h2 = h3
 		alf = alf*0.99
-        
+
     return h2
-# UNTESTED UNFINISHED DUE TO UNIMPLEMENTED METHOD (DEPENDENCIES: parzenml)
+    
 import numpy
 import math
 import numpy.matlib
