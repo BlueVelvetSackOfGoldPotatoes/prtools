@@ -515,3 +515,324 @@ def gendatr(x,targets):
     a = prdataset(x,targets)
     a.targettype = 'regression'
     return a
+
+############ NEW FUNCTIONS ############
+from numpy.random import default_rng
+
+def exprnd(mu=0, m=0, n=0):
+    """
+    EXPRND Random matrices from exponential distribution.
+    R = EXPRND(MU) returns a matrix of random numbers chosen   
+    from the exponential distribution with parameter MU.
+    The size of R is the size of MU.
+    Alternatively, R = EXPRND(MU,M,N) returns an M by N matrix. 
+    """
+    if mu <= 0:
+        raise ValueError("MU is not a positive number!")
+
+    rng = default_rng()
+
+    # Is this the wanted size in case m and n are not given?
+    if m == 0 or n == 0:
+        exp_mat = rng.exponential(mu, (mu,mu))
+    else:
+        exp_mat = rng.exponential(mu, (m,n))
+
+    # No target values - is this a problem?
+    exp_mat = prdataset(exp_mat)
+    exp_mat.targettype = 'exponential'
+
+    return exp_mat
+
+# UNTESTED UNFINISHED
+def gendatk(A=None, N=[], k=1, stdev=1):
+    ######################## MATLAB v
+    function B = gendatk()
+
+        prtrace(mfilename);
+
+        if (nargin < 4) 		
+            prwarning(3,'Standard deviation of the added Gaussian noise is not specified, assuming 1.');
+            stdev = 1; 
+        end
+        if (nargin < 3) 
+            prwarning(3,'Number of nearest neighbors to be used is not specified, assuming 1.');
+            k = 1; 
+        end
+        if (nargin < 2)
+            prwarning(3,'Number of samples to generate is not specified, assuming 50.');
+            N = [];   % This happens some lines below.
+        end
+        if (nargin < 1)
+            error('No dataset found.');
+        end
+
+        A = dataset(A);
+        A = setlablist(A); % remove empty classes first
+        [m,n,c] = getsize(A);
+        prior = getprior(A);
+        if isempty(N), 
+            N = repmat(50,1,c); 				% 50 samples are generated.  		
+        end
+        N = genclass(N,prior);				% Generate class frequencies according to the priors.			
+
+        lablist = getlablist(A);
+        B = [];
+        labels = [];
+        % Loop over classes.
+        for j=1:c
+            a = getdata(A,j); 					% The j-th class.
+            [D,I] = sort(distm(a)); 
+            I = I(2:k+1,:); 						% Indices of the K nearest neighbors.
+            alf = randn(k,N(j))*stdev;	% Normally distributed 'noise'.
+            nu = ceil(N(j)/size(a,1));	% It is possible that NU > 1 if many objects have to be generated. 
+            J = randperm(size(a,1));		
+            J = repmat(J,nu,1)';				
+            J = J(1:N(j));							% Combine the NU repetitions of J into one column vector.
+            b = zeros(N(j),n);
+
+            % Loop over features.
+            for f = 1:n
+                b(:,f) = a(J,f) + sum(( ( a(J,f)*ones(1,k) - ...
+                reshape(+a(I(:,J),f),k,N(j))' ) .* alf' )' /k, 1)';
+            end
+            B = [B;b];
+            labels = [labels; repmat(lablist(j,:),N(j),1)];
+        end
+
+        B = dataset(B,labels,'prior',A.prior);
+        %B = set(B,'featlab',getfeatlab(A),'name',getname(A),'featsize',getfeatsize(A));
+        %DXD. Added this exception, because else it's going to complain
+        %     that the name is not a string.
+        B = set(B,'featlab',getfeatlab(A),'featsize',getfeatsize(A));
+        if ~isempty(getname(A))
+            B = setname(B,getname(A));
+        end
+
+    return;
+    ######################## MATLAB ^
+    '''
+    GENDATK K-Nearest neighbor data generation
+    
+        B = GENDATK(A,N,K,S)
+    
+    INPUT
+        A  Dataset
+        N  Number of points (optional; default: 50)
+        K  Number of nearest neighbors (optional; default: 1)
+        S  Standard deviation (optional; default: 1)
+
+    OUTPUT
+        B  Generated dataset
+    
+    DESCRIPTION 
+        Generation of N points using the K-nearest neighbors of objects in the dataset A. First, N points of A are chosen in a random order. Next, to each of these points and for each direction (feature), a Gaussian-distributed 
+        offset is added with the zero mean and the standard deviation: S * the mean signed difference between the point of A under consideration and its K nearest neighbors in A. 
+        
+        The result of this procedure is that the generated  points follow the local density properties of the point from which they originate.
+        
+        If A is a multi-class dataset the above procedure is followed class by class, neglecting objects of other classes and possibly unlabeled objects.
+        
+        If N is a vector of sizes, exactly N(I) objects are generated for class I. Default N is 100 objects per class.
+    '''
+    import numpy
+    import math
+    import numpy.matlib
+    from scipy.spatial import distance_matrix
+    
+    if type(a) == 'class NoneType':
+        raise NameError("Data set, A, is not defined!")
+
+    A = dataset(A)
+    A = A.lablist()
+    
+    m, n, c = getsize(A)
+    prior = getprior(A)
+
+    if len(N) == 0:
+        N = numpy.matlib.repmat(50, 1, c)
+    N = genclass(N, prior)
+    lablist = gelablist(A) # getlablist is not implemented yet!
+    B = []
+    labels = []
+    for i in range(c):
+        a = getdata(A,j) # getdata is not implemented yet!
+        a.sort()
+        D, I = spa.distance_matrix(a, a)
+        I = I[2:k+1,:]
+        alf = numpy.random.randn(k,N[j]) * stdev
+        nu = math.ceil(N[j] / getsize(a,1))
+        J = numpy.random.permutation(getsize(a,1))
+        J = numpy.matlib.repmat(J, nu, 1)
+        b = numpy.zeros(N[j], n)
+
+        for f in range(n):
+            b[:,f] = a[J,f] + sum()
+
+import numpy
+import math
+import numpy.matlib
+from scipy.spatial import distance_matrix
+
+def gendatp(A=None, N=None, s=0, G=None):
+    '''
+    GENDATP Parzen density data generation
+    
+        B = GENDATP(A,N,S,G)
+    
+    INPUT
+        A  Dataset
+        N  Number(s) of points to be generated (optional; default: 50 per class)
+        S  Smoothing parameter(s) (optional; default: a maximum likelihood estimate based on A)
+        G  Covariance matrix used for generation of the data  (optional; default: the identity matrix)
+    
+    OUTPUT
+        B  Dataset of points generated according to Parzen density
+    
+    DESCRIPTION  
+        Generation of a dataset B of N points by using the Parzen estimate of the density of A based on a smoothing parameter S. N might be a row/column vector with different numbers for each class. Similarly, S might be a vector with different smoothing parameters for each class. If S = 0, then S is determined by a maximum likelihood estimate using PARZENML. If N is a vector, then exactly N(I) objects are generated for the class I. G is the covariance matrix to be used for generating the data. G may be a 3-dimensional matrix storing separate covariance matrices for each class.
+    '''
+    if type(A) == 'class NoneType':
+       raise NameError("Data set, {}, is not defined!".format(A))
+
+    if N is None:
+        N = 50*nrclasses(A)
+    if G is None:
+        G = numpy.identity(max(getsize(A,1), getsize(A,2)))
+
+    m, k, c = getsize(A)
+    p = A.getprior()
+
+    if len(s) == 1:
+        s = numpy.matlib.repmat(s, 1, c)
+    if len(s) != c:
+        raise ValueError("Wrong number of smoothing parameters: expected {}, got {}".format(c, len(s)))
+
+    # If covariance matrices not specified, identity matrix assumed
+    covmatrix = numpy.identity(max(getsize(A,1), getsize(A,2))
+
+    # if covariance matrix is not the identity matrix
+    if G != covmatrix:
+        covmat_flag = 0
+        if numpy.ndim(G) == 2:
+            G = numpy.matlib.repmat(G, [1,1,c])
+        if getsize(G, 1) != k or getsize(G, 2) != k or getsize(G, 3) != c:
+            raise VelueError("Coariance matrix has wrong size: expected {}, got {}".format([k,k,c], getsize(G)))
+    else:
+        covmat_flag = 1
+
+    N = genclass(N, p)
+    lablist = A.lablist()
+    B = []
+    labels = []
+
+    for j in range(c):
+        a = __getitem__(A, j)
+        a = prdataset(a)
+        ma = getsize(a, 1)
+        if s[j] == 0:
+            h = parzenml(a) # parzenml is not implemented yet
+        else:
+            h = s[j]
+
+        # Missing gendatgauss
+        if not covmat:
+            b = numpy.multiply(a[math.ceil[numpy.random.randn(N[j], 1) * ma], :] + numpy.random.randn(N[j], k), numpy.matlib.repmat(h,N[j],k)
+        else:
+            b = numpy.multiply(a[math.ceil[numpy.random.randn(N[j], 1) * ma], :] + gendatgauss(N[j], numpy.zeros(1, k), G[:,:,j]), numpy.matlib.repmat(h,N[j],k)
+        B = [B,b]
+        labels = [labels, numpy.matlib.repmat(lablist[j,:], N[j], 1)]
+    B = prdataset(B, labels)
+    B.prior = p
+    B.setname(A.getname())
+
+    return B
+
+import matplotlib.pyplot as plt
+from numpy.random import default_rng
+# 2d generate and plot multivariate gaussian - currently working on separate plot method
+'''
+    @var classes - a scalar, number of classes
+    @var density - an array of densities
+    @var u - a matrix, mean matrix
+    @var g - a matrix, cov matrix
+    @var N - a scalar, the total number of points
+    @var Ns - size (number of samples to generate)
+
+    Usecase:
+        u = [[10, 5], [-10, -5]]
+        g = [[[9, 5], 
+            [5, 9]],  
+
+            [[5, 0], 
+            [0, 5]]]
+        N = 1000
+
+        labels=['classe1', 'classe2']
+        dataset = gen_gauss_and_plot_2d(N, u, g, labels)
+'''
+def gen_gauss_and_plot_2d(N=50, u=0, g=0):
+    if not u:
+        u = numpy.zeros(N,1)
+    if not g:  
+        g = numpy.eye(N)
+
+    g = numpy.array(g)
+    u = numpy.array(u)
+
+    if g.shape[2] > 2:
+        raise ValueError('Covariate matrix is 3d not 2d!')
+
+    if len(u[0]) > 2:
+        raise ValueError('Mean matrix is formated for 3d not 2d!')
+
+    if len(g) != len(u):
+        raise ValueError('Matrix cov and mean have different lengths!')
+
+    density = []
+
+    # The same random density for all classes else dataset cannot be made (different dimensions)
+    rand_density = round(random.random(), 1)
+    for i in range(len(g)):
+        density.append(rand_density)
+
+    density = numpy.array(density)
+    Ns = (N*density).astype(int)
+    dataset = []
+    # This line is responsible to generate len(density) number of classes
+    for i in range(len(density)):
+        rgb = numpy.random.rand(3,)
+        x = numpy.random.multivariate_normal(u[i], g[i], Ns[i]).T
+        dataset.append(x)
+        plt.scatter(x[0], x[1], color=rgb)
+    plt.show()
+
+    return dataset
+
+# UNTESTED
+def gendatdd(n=100, d=2):
+    '''
+    Generates a 2-class data set containing N points in 
+    a D-dimensional distribution.
+        A = GENDATDD (N,D) 
+     
+    In this distribution, 2 randomly chosen 
+    dimensions contain fully separated Gaussian distributed data; the others 
+    contain unit covariance Gaussian noise.
+    '''
+    import math
+
+    data = gen_gauss_and_plot_2d(n, 2*numpy.zeroes((1, d)), 5*numpy.eye(d))
+
+    a = gen_gauss_and_plot_2d(math.floor(n/2),[0, 0],numpy.array([[3, -2.5], [-2.5, 3]]))
+    
+    b = gen_gauss_and_plot_2d(math.ceil(n/2), [4, 4],numpy.array([[3, -2.5], [-2.5, 3]]))
+    
+    p = numpy.random.permutation(d)
+    data[:,p[0:1]] = numpy.block([[a], [b]])
+
+    labs = [numpy.ones((math.floor(n/2), 1)), [2*numpy.ones((math.ceil(n/2),1))]]
+
+    data = prdataset(data, labs)
+    data.name = 'Gaussian dataset'
+    return data
