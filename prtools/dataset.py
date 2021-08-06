@@ -546,71 +546,6 @@ def exprnd(mu=0, m=0, n=0):
 
 # UNTESTED UNFINISHED
 def gendatk(A=0, N=[], k=1, stdev=1):
-    ######################## MATLAB v
-    function B = gendatk()
-
-        prtrace(mfilename);
-
-        if (nargin < 4) 		
-            prwarning(3,'Standard deviation of the added Gaussian noise is not specified, assuming 1.');
-            stdev = 1; 
-        end
-        if (nargin < 3) 
-            prwarning(3,'Number of nearest neighbors to be used is not specified, assuming 1.');
-            k = 1; 
-        end
-        if (nargin < 2)
-            prwarning(3,'Number of samples to generate is not specified, assuming 50.');
-            N = [];   % This happens some lines below.
-        end
-        if (nargin < 1)
-            error('No dataset found.');
-        end
-
-        A = dataset(A);
-        A = setlablist(A); % remove empty classes first
-        [m,n,c] = getsize(A);
-        prior = getprior(A);
-        if isempty(N), 
-            N = repmat(50,1,c); 				% 50 samples are generated.  		
-        end
-        N = genclass(N,prior);				% Generate class frequencies according to the priors.			
-
-        lablist = getlablist(A);
-        B = [];
-        labels = [];
-        % Loop over classes.
-        for j=1:c
-            a = getdata(A,j); 					% The j-th class.
-            [D,I] = sort(distm(a)); 
-            I = I(2:k+1,:); 						% Indices of the K nearest neighbors.
-            alf = randn(k,N(j))*stdev;	% Normally distributed 'noise'.
-            nu = ceil(N(j)/size(a,1));	% It is possible that NU > 1 if many objects have to be generated. 
-            J = randperm(size(a,1));		
-            J = repmat(J,nu,1)';				
-            J = J(1:N(j));							% Combine the NU repetitions of J into one column vector.
-            b = zeros(N(j),n);
-
-            % Loop over features.
-            for f = 1:n
-                b(:,f) = a(J,f) + sum(( ( a(J,f)*ones(1,k) - ...
-                reshape(+a(I(:,J),f),k,N(j))' ) .* alf' )' /k, 1)';
-            end
-            B = [B;b];
-            labels = [labels; repmat(lablist(j,:),N(j),1)];
-        end
-
-        B = dataset(B,labels,'prior',A.prior);
-        %B = set(B,'featlab',getfeatlab(A),'name',getname(A),'featsize',getfeatsize(A));
-        %DXD. Added this exception, because else it's going to complain
-        %     that the name is not a string.
-        B = set(B,'featlab',getfeatlab(A),'featsize',getfeatsize(A));
-        if ~isempty(getname(A))
-            B = setname(B,getname(A));
-        end
-
-    return;
-    ######################## MATLAB ^
     '''
     GENDATK K-Nearest neighbor data generation
     
@@ -640,16 +575,13 @@ def gendatk(A=0, N=[], k=1, stdev=1):
     import numpy.matlib
     from scipy.spatial import distance_matrix
     
-    if not a:
+    if not A:
         raise ValueError("Dataset missing!")
-    if len(a) == 0:
+    if len(A) == 0:
         raise ValueError("Empty dataset!")
 
-    A = dataset(A)
-    A = A.lablist()
-    
     m, n, c = getsize(A)
-    prior = getprior(A)
+    prior = A.getprior()
 
     if len(N) == 0:
         N = numpy.matlib.repmat(50, 1, c)
@@ -670,7 +602,12 @@ def gendatk(A=0, N=[], k=1, stdev=1):
         b = numpy.zeros(N[j], n)
 
         for f in range(n):
-            b[:,f] = a[J,f] + sum()
+            b[:,f] = a[J,f] + sum(((a[J,f]*numpy.ones((1,k)) - numpy.reshape(a[I[:, J],f], k, N[j]), order="F").conj().T * alf.conj().T).conj().T / k, 1).conj().T
+        B = np.concatenate((B,b))
+
+    C = A
+    C.setdata(B)
+    return C
 
 import numpy
 import math
