@@ -186,7 +186,7 @@ class prdataset(object):
     def nrclasses(self):
         # ADDED - UNTESTED
         if not isinstance(self,prdataset):
-                raise TypeError('Invalid data format!')
+                raise TypeError('Not a dataset!')
         else:
             ll = numpy.unique(self.targets)
         return len(ll)
@@ -545,7 +545,7 @@ def exprnd(mu=0, m=0, n=0):
     return exp_mat
 
 # UNTESTED UNFINISHED
-def gendatk(A=None, N=[], k=1, stdev=1):
+def gendatk(A=0, N=[], k=1, stdev=1):
     ######################## MATLAB v
     function B = gendatk()
 
@@ -640,8 +640,10 @@ def gendatk(A=None, N=[], k=1, stdev=1):
     import numpy.matlib
     from scipy.spatial import distance_matrix
     
-    if type(a) == 'class NoneType':
-        raise NameError("Data set, A, is not defined!")
+    if not a:
+        raise ValueError("Dataset missing!")
+    if len(a) == 0:
+        raise ValueError("Empty dataset!")
 
     A = dataset(A)
     A = A.lablist()
@@ -652,18 +654,19 @@ def gendatk(A=None, N=[], k=1, stdev=1):
     if len(N) == 0:
         N = numpy.matlib.repmat(50, 1, c)
     N = genclass(N, prior)
-    lablist = gelablist(A) # getlablist is not implemented yet!
+    lablist = A.lablist()
     B = []
     labels = []
     for i in range(c):
-        a = getdata(A,j) # getdata is not implemented yet!
+        a = __getitem__(A,j)
         a.sort()
         D, I = spa.distance_matrix(a, a)
         I = I[2:k+1,:]
         alf = numpy.random.randn(k,N[j]) * stdev
         nu = math.ceil(N[j] / getsize(a,1))
         J = numpy.random.permutation(getsize(a,1))
-        J = numpy.matlib.repmat(J, nu, 1)
+        J = numpy.matlib.repmat(J, nu, 1).conj().T
+        J = J[1:N[j]]
         b = numpy.zeros(N[j], n)
 
         for f in range(n):
@@ -731,7 +734,7 @@ def gendatp(A=None, N=None, s=0, G=None):
         a = prdataset(a)
         ma = getsize(a, 1)
         if s[j] == 0:
-            h = parzenml(a) # parzenml is not implemented yet
+            h = parzenml(a)
         else:
             h = s[j]
 

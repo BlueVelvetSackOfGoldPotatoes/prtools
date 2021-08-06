@@ -3102,6 +3102,10 @@ def lines5d(N=[50, 50, 50]):
     for i in range(1, n3-1):
         c3[i] = c3[i-1] + (1/(n3-1))
 
+    c1 = c1.conj().T
+    c2 = c2.conj().T
+    c3 = c3.conj().T
+
     a  = c1*s1 + (1-c1)*s2
     a  = [a, [c2*s3 + (1-c2)*s4]]
     a  = [a, [c3*s5 + (1-c3)*s6]]
