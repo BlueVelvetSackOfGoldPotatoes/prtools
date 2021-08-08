@@ -544,7 +544,7 @@ def exprnd(mu=0, m=0, n=0):
 
     return exp_mat
 
-# UNTESTED UNFINISHED
+# UNTESTED
 def gendatk(A=0, N=[], k=1, stdev=1):
     '''
     GENDATK K-Nearest neighbor data generation
@@ -649,7 +649,7 @@ def gendatp(A=None, N=None, s=0, G=None):
         raise ValueError("Wrong number of smoothing parameters: expected {}, got {}".format(c, len(s)))
 
     # If covariance matrices not specified, identity matrix assumed
-    covmatrix = numpy.identity(max(getsize(A,1), getsize(A,2))
+    covmatrix = numpy.identity(max(getsize(A,1), getsize(A,2)))
 
     # if covariance matrix is not the identity matrix
     if G != covmatrix:
@@ -657,7 +657,7 @@ def gendatp(A=None, N=None, s=0, G=None):
         if numpy.ndim(G) == 2:
             G = numpy.matlib.repmat(G, [1,1,c])
         if getsize(G, 1) != k or getsize(G, 2) != k or getsize(G, 3) != c:
-            raise VelueError("Coariance matrix has wrong size: expected {}, got {}".format([k,k,c], getsize(G)))
+            raise VelueError("Coariance matrix has wrong size: expected {0}, got {1}".format([k,k,c], getsize(G)))
     else:
         covmat_flag = 1
 
@@ -677,9 +677,9 @@ def gendatp(A=None, N=None, s=0, G=None):
 
         # Missing gendatgauss
         if not covmat:
-            b = numpy.multiply(a[math.ceil[numpy.random.randn(N[j], 1) * ma], :] + numpy.random.randn(N[j], k), numpy.matlib.repmat(h,N[j],k)
+            b = numpy.multiply(a[math.ceil[numpy.random.randn(N[j], 1) * ma], :] + numpy.random.randn(N[j], k), numpy.matlib.repmat(h,N[j],k))
         else:
-            b = numpy.multiply(a[math.ceil[numpy.random.randn(N[j], 1) * ma], :] + gendatgauss(N[j], numpy.zeros(1, k), G[:,:,j]), numpy.matlib.repmat(h,N[j],k)
+            b = numpy.multiply(a[math.ceil[numpy.random.randn(N[j], 1) * ma], :] + gendatgauss(N[j], numpy.zeros(1, k), G[:,:,j]), numpy.matlib.repmat(h,N[j],k))
         B = [B,b]
         labels = [labels, numpy.matlib.repmat(lablist[j,:], N[j], 1)]
     B = prdataset(B, labels)
