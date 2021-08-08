@@ -544,6 +544,11 @@ def exprnd(mu=0, m=0, n=0):
 
     return exp_mat
 
+
+import numpy
+import math
+import numpy.matlib
+from scipy.spatial import distance_matrix
 # UNTESTED
 def gendatk(A=0, N=[], k=1, stdev=1):
     '''
@@ -570,10 +575,6 @@ def gendatk(A=0, N=[], k=1, stdev=1):
         
         If N is a vector of sizes, exactly N(I) objects are generated for class I. Default N is 100 objects per class.
     '''
-    import numpy
-    import math
-    import numpy.matlib
-    from scipy.spatial import distance_matrix
     
     if not A:
         raise ValueError("Dataset missing!")
@@ -701,6 +702,9 @@ def gen_gauss_and_plot_2d(N=50, u=0, g=0):
     @var N - a scalar, the total number of points
     @var Ns - size (number of samples to generate)
 
+    Generation of N K-dimensional Gaussian distributed samples for C classes.
+    The covariance matrices should be specified in G (size K*K*C) and the means, labels and prior probabilities can be defined by the dataset U with size (C*K). If U is not a dataset, it should be a C*K matrix and A will be a dataset with C classes.
+
     Usecase:
         u = [[10, 5], [-10, -5]]
         g = [[[9, 5], 
@@ -751,6 +755,29 @@ def gen_gauss_and_plot_2d(N=50, u=0, g=0):
     return dataset
 
 def gauss(N=50, u=0, g=0):
+    '''
+    @var classes - a scalar, number of classes
+    @var density - an array of densities
+    @var u - a matrix, mean matrix
+    @var g - a matrix, cov matrix
+    @var N - a scalar, the total number of points
+    @var Ns - size (number of samples to generate)
+
+    Generation of N K-dimensional Gaussian distributed samples for C classes.
+    The covariance matrices should be specified in G (size K*K*C) and the means, labels and prior probabilities can be defined by the dataset U with size (C*K). If U is not a dataset, it should be a C*K matrix and A will be a dataset with C classes.
+
+    Usecase:
+        u = [[10, 5], [-10, -5]]
+        g = [[[9, 5], 
+            [5, 9]],  
+
+            [[5, 0], 
+            [0, 5]]]
+        N = 1000
+
+        labels=['classe1', 'classe2']
+        dataset = gauss(N, u, g, labels)
+    '''
     if not u:
         u = numpy.zeros(N,1)
     if not g:  
@@ -786,6 +813,7 @@ def gauss(N=50, u=0, g=0):
 
     return dataset
 
+import math
 # UNTESTED
 def gendatdd(n=100, d=2):
     '''
@@ -797,8 +825,6 @@ def gendatdd(n=100, d=2):
     dimensions contain fully separated Gaussian distributed data; the others 
     contain unit covariance Gaussian noise.
     '''
-    import math
-
     data = gen_gauss_and_plot_2d(n, 2*numpy.zeroes((1, d)), 5*numpy.eye(d))
 
     a = gen_gauss_and_plot_2d(math.floor(n/2),[0, 0],numpy.array([[3, -2.5], [-2.5, 3]]))
