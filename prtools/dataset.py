@@ -691,7 +691,9 @@ def gendatp(A=None, N=None, s=0, G=None):
 import matplotlib.pyplot as plt
 from numpy.random import default_rng
 # 2d generate and plot multivariate gaussian - currently working on separate plot method
-'''
+
+def gen_gauss_and_plot_2d(N=50, u=0, g=0):
+    '''
     @var classes - a scalar, number of classes
     @var density - an array of densities
     @var u - a matrix, mean matrix
@@ -710,8 +712,7 @@ from numpy.random import default_rng
 
         labels=['classe1', 'classe2']
         dataset = gen_gauss_and_plot_2d(N, u, g, labels)
-'''
-def gen_gauss_and_plot_2d(N=50, u=0, g=0):
+    '''
     if not u:
         u = numpy.zeros(N,1)
     if not g:  
@@ -746,6 +747,42 @@ def gen_gauss_and_plot_2d(N=50, u=0, g=0):
         dataset.append(x)
         plt.scatter(x[0], x[1], color=rgb)
     plt.show()
+
+    return dataset
+
+def gauss(N=50, u=0, g=0):
+    if not u:
+        u = numpy.zeros(N,1)
+    if not g:  
+        g = numpy.eye(N)
+
+    g = numpy.array(g)
+    u = numpy.array(u)
+
+    if g.shape[2] > 2:
+        raise ValueError('Covariate matrix is 3d not 2d!')
+
+    if len(u[0]) > 2:
+        raise ValueError('Mean matrix is formated for 3d not 2d!')
+
+    if len(g) != len(u):
+        raise ValueError('Matrix cov and mean have different lengths!')
+
+    density = []
+
+    # The same random density for all classes else dataset cannot be made (different dimensions)
+    rand_density = round(random.random(), 1)
+    for i in range(len(g)):
+        density.append(rand_density)
+
+    density = numpy.array(density)
+    Ns = (N*density).astype(int)
+    dataset = []
+    # This line is responsible to generate len(density) number of classes
+    for i in range(len(density)):
+        rgb = numpy.random.rand(3,)
+        x = numpy.random.multivariate_normal(u[i], g[i], Ns[i]).T
+        dataset.append(x)
 
     return dataset
 
