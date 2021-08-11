@@ -162,3 +162,4 @@ function a = gauss(n,u,g,labtype)
 	a = setname(a,'Gaussian Data');
 
 return
+

@@ -603,7 +603,7 @@ def gendatk(A=0, N=[], k=1, stdev=1):
         b = numpy.zeros(N[j], n)
 
         for f in range(n):
-            b[:,f] = a[J,f] + sum(((a[J,f]*numpy.ones((1,k)) - numpy.reshape(a[I[:, J],f], k, N[j]), order="F").conj().T * alf.conj().T).conj().T / k, 1).conj().T
+            b[:,f] = a[J,f] + sum(((a[J,f]*numpy.ones((1,k)) - numpy.reshape(a[I[:, J],f], k, N[j], order="F")).conj().T * alf.conj().T).conj().T / k, 1).conj().T
         B = np.concatenate((B,b))
 
     C = A
@@ -839,3 +839,5 @@ def gendatdd(n=100, d=2):
     data = prdataset(data, labs)
     data.name = 'Gaussian dataset'
     return data
+
+    

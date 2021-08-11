@@ -3013,10 +3013,9 @@ def parzenml_scalar(A=None, fid=[]):
     alf = 1
     iter = 0
     while abs(1e0-F2/F1) > 1e-4 and abs(1e0-h2/h1) > 1e-3 and abs(F2) > 1e-70:
-	    iter = iter+1
-	    h3 = (h1*h1*h2*h2)*(F2-F1)/(F2*h2*h2-F1*h1*h1)
-
-	    if h3 < 0:
+        iter = iter+1
+        h3 = (h1*h1*h2*h2)*(F2-F1)/(F2*h2*h2-F1*h1*h1)
+        if h3 < 0:
             h3 = sqrt((F2+m*k)*h2*h2/(m*k))
         else:
             h3 = sqrt(h3)
@@ -3027,7 +3026,7 @@ def parzenml_scalar(A=None, fid=[]):
         F2 = F3
         h1 = h2
         h2 = h3
-	    alf = alf*0.99
+        alf = alf*0.99
 
     return h2
 
