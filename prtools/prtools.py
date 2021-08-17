@@ -2892,7 +2892,7 @@ def parzenml_vector(A=None, fid=[]):
         raise NameError("Data set, A, is not defined!")
     
     SS = A.lablist()
-    m,k,c = getsize(A,0)
+    m,k,c = getsize(A)
     # Euclidean distance
     DD =  scipy.spatial.distance_matrix(A, A)
     # squared form
@@ -2987,7 +2987,8 @@ def parzenml_scalar(A=None, fid=[]):
     '''
     if type(A) == 'class NoneType':
         raise NameError("Data set, A is not defined!")
-    m,k = getsize(A,1), getsize(A,2)
+    m = getsize(A,1)
+    k = getsize(A,2)
     # Euclidean distance
     DD =  scipy.spatial.distance_matrix(A, A)
     # squared form
@@ -3153,17 +3154,32 @@ def getsize(w, dim=0):
     DESCRIPTION
     Returns size of the dataset A and the number of classes. C is determined from the number of labels stored in A.LABLIST. If DIM = 1,2 or 3, just one of these numbers is returned, e.g. C = GETSIZE(A,3).
     '''
-    np_a = numpy.array(w).shape
+    # np_a = numpy.array(w).shape
     
+    # if dim == 1:
+    #     s = np_a[0]
+    # elif dim == 2:
+    #     s = np_a[1]
+    # elif dim == 3:
+    #     s = len(w.lablist())
+    # elif dim == 0:
+    #     s = np_a
+    #     s = numpy.append(s, len(w.lablist()))
+    # else:
+    #     raise ValueError('Illegal parameter value')
+    # return s
+    
+    np_a = numpy.array(w).shape
+    shape_s = numpy.append(np_a,len(w[0])) if isinstance(w[0][0], numpy.ndarray) else numpy.append(np_a, 1)
+
     if dim == 1:
-        s = np_a[0]
+        s = shape_s[0]
     elif dim == 2:
-        s = np_a[1]
+        s = shape_s[1]
     elif dim == 3:
-        s = len(w.lablist())
+        s = shape_s[2]
     elif dim == 0:
-        s = np_a
-        s = numpy.append(s, len(w.lablist()))
+        s = shape_s
     else:
         raise ValueError('Illegal parameter value')
     return s

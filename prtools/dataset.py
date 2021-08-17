@@ -610,6 +610,67 @@ def gendatk(A=0, N=[], k=1, stdev=1):
     C.setdata(B)
     return C
 
+def gendatgauss(n=50, u=False, g=False, labtype='crisp'):
+    cn = len(n)
+    p = 0
+
+    if not u:
+        u = numpy.zeros((cn, 1))
+
+    if not g:
+        g = numpy.eye(getsize(u,1))
+
+    if len(n) == 1 and n == 0:
+        return prdataset([])
+    
+    if isinstance(u,prdataset):
+        m, k, c = getsize(u)
+        lablist = u.lablist()
+        p = u.getprior()
+        if c == 0:
+            u = u.astype(float)
+    
+    if isinstance(u.flat[0], numpy.floating):
+        m, k = u.shape
+        c = m
+        lablist = genlab(numpy.ones((c,1)))
+        u = prdataset(u, lablist)
+        p = numpy.ones((1,c)) / c
+
+    if cn != c and cn != 1:
+        raise valueError("The number of classes specified by n and u does not match! n: {} u: {}".format(n, u))
+
+    n = genclass(n,p)
+
+    if len(g) == 0:
+        g = numpy.eye(k)
+        cg = 1
+    else:
+        g = numpy.real(g)
+        k1, k2, cg = getsize(g)
+        if k1 != k or k2 != k:
+            raise valueError("The number of dimensions of the means u and covariance matrices g do not match")
+        if cg != m and cg != 1:
+            raise valueError("The number of classes specified by the means u and covariance matrices g do not match")
+
+    a = numpy.array([])
+    for i in range(len(m)):
+        j = min(i, cg)
+        V, D = preig(g[:,:,j])
+        V = numpy.real(V)
+        D = numpy.real(D)
+        D = max(D,0)
+        appended = numpy.random.randn(n[i],k) @ sqrt(D) @ V.conj().T 
+        + numpy.tile(+u[i,:],(n[i],1))
+        a =  numpy.append(a,[a, appended])
+
+    labels = genlab(n, lablist)
+    a = prdataset(a, labels)
+    if p != 0:
+        a.prior = p
+    a.name = "Gaussian data"
+    return a
+
 import numpy
 import math
 import numpy.matlib
@@ -676,7 +737,6 @@ def gendatp(A=None, N=None, s=0, G=None):
         else:
             h = s[j]
 
-        # Missing gendatgauss
         if not covmat:
             b = numpy.multiply(a[math.ceil[numpy.random.randn(N[j], 1) * ma], :] + numpy.random.randn(N[j], k), numpy.matlib.repmat(h,N[j],k))
         else:
@@ -692,7 +752,7 @@ def gendatp(A=None, N=None, s=0, G=None):
 import matplotlib.pyplot as plt
 from numpy.random import default_rng
 
-def gauss(N=50, u=0, g=0, plot=True):
+def gauss(N=50, u=0, g=0, plot=False):
     '''
     @var classes - a scalar, number of classes
     @var density - an array of densities
@@ -746,15 +806,14 @@ def gauss(N=50, u=0, g=0, plot=True):
     dataset = []
     # This line is responsible to generate len(density) number of classes
     for i in range(len(density)):
-        rgb = numpy.random.rand(3,)
         x = numpy.random.multivariate_normal(u[i], g[i], Ns[i]).T
         dataset.append(x)
         if plot:
+            rgb = numpy.random.rand(3,)
             plt.scatter(x[0], x[1], color=rgb)
 
     if plot:
         plt.show()
-
 
     return dataset
 
@@ -770,11 +829,11 @@ def gendatdd(n=100, d=2):
     dimensions contain fully separated Gaussian distributed data; the others 
     contain unit covariance Gaussian noise.
     '''
-    data = gen_gauss_and_plot_2d(n, 2*numpy.zeroes((1, d)), 5*numpy.eye(d))
+    data = gauss(n, 2*numpy.zeroes((1, d)), 5*numpy.eye(d), False)
 
-    a = gen_gauss_and_plot_2d(math.floor(n/2),[0, 0],numpy.array([[3, -2.5], [-2.5, 3]]))
+    a = gauss(math.floor(n/2),[0, 0],numpy.array([[3, -2.5], [-2.5, 3]]), False)
     
-    b = gen_gauss_and_plot_2d(math.ceil(n/2), [4, 4],numpy.array([[3, -2.5], [-2.5, 3]]))
+    b = gauss(math.ceil(n/2), [4, 4],numpy.array([[3, -2.5], [-2.5, 3]]), False)
     
     p = numpy.random.permutation(d)
     data[:,p[0:1]] = numpy.block([[a], [b]])
@@ -784,5 +843,3 @@ def gendatdd(n=100, d=2):
     data = prdataset(data, labs)
     data.name = 'Gaussian dataset'
     return data
-
-    
