@@ -3220,6 +3220,8 @@ def roc_n_plot(task=None, x=None, w=None, plot=False):
         model = LogisticRegression(solver='lbfgs')
         model = model.fit(trainX, trainy)
         w._targets_ = testX
+        w._targets_ = numpy.array(w._targets_)
+        w._targets_ = numpy.concatenate((w._targets_, testy),axis=0)
         w.model = model
         # Store the model 
         return w
@@ -3228,12 +3230,12 @@ def roc_n_plot(task=None, x=None, w=None, plot=False):
             raise valueError("Error: No trained model - nothing to evaluate!")
         # Predict probabilities
         model = w.model
-        lr_probs = model.predict_proba(w._targets_)
+        lr_probs = model.predict_proba(w._targets_[0])
         # Keep probabilities for the positive outcome only
         lr_probs = lr_probs[:, 1]
         # Calculate scores
-        ns_auc = roc_auc_score(testy, ns_probs)
-        lr_auc = roc_auc_score(testy, lr_probs)
+        ns_auc = roc_auc_score(w._targets_[1], ns_probs)
+        lr_auc = roc_auc_score(w._targets_[1], lr_probs)
         # Summarize scores
         print('No Skill: ROC AUC=%.3f' % (ns_auc))
         print('Logistic: ROC AUC=%.3f' % (lr_auc))
@@ -3241,8 +3243,8 @@ def roc_n_plot(task=None, x=None, w=None, plot=False):
         # Plot the roc curve for the model
         if plot:
             # Calculate roc curves
-            ns_fpr, ns_tpr, _ = roc_curve(testy, ns_probs)
-            lr_fpr, lr_tpr, _ = roc_curve(testy, lr_probs)
+            ns_fpr, ns_tpr, _ = roc_curve(w._targets_[1], ns_probs)
+            lr_fpr, lr_tpr, _ = roc_curve(w._targets_[1], lr_probs)
             # Plot
             pyplot.plot(ns_fpr, ns_tpr, linestyle='--', label='No Skill')
             pyplot.plot(lr_fpr, lr_tpr, marker='*', label='Logistic')
