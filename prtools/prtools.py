@@ -3154,20 +3154,6 @@ def getsize(w, dim=0):
     DESCRIPTION
     Returns size of the dataset A and the number of classes. C is determined from the number of labels stored in A.LABLIST. If DIM = 1,2 or 3, just one of these numbers is returned, e.g. C = GETSIZE(A,3).
     '''
-    # np_a = numpy.array(w).shape
-    
-    # if dim == 1:
-    #     s = np_a[0]
-    # elif dim == 2:
-    #     s = np_a[1]
-    # elif dim == 3:
-    #     s = len(w.lablist())
-    # elif dim == 0:
-    #     s = np_a
-    #     s = numpy.append(s, len(w.lablist()))
-    # else:
-    #     raise ValueError('Illegal parameter value')
-    # return s
     
     np_a = numpy.array(w).shape
     shape_s = numpy.append(np_a,len(w[0])) if isinstance(w[0][0], numpy.ndarray) else numpy.append(np_a, 1)
@@ -3186,10 +3172,8 @@ def getsize(w, dim=0):
 
 def preig(a):
     '''
-    PREIG Call to EIG()
-    You are probably passing the path to the .pb file of the frozen model/graph, which is different from the .pb file of a SavedModel, and that's why the SavedModel can't be found. Unlike frozen models/graphs, SavedModels are also associated with an auto-generated folder called "variables", so be sure your .pb file was generated in the correct way as it is described in the docs: https://www.tensorflow.org/guide/saved_model.
-    
-    This calls [E,D] = EIG(A)
+    Warning function that was used on Matlab
+    Unsure how useful it is here ...
     '''
     m, n = a.shape
     array_size = [m,n]
@@ -3197,3 +3181,74 @@ def preig(a):
         print('Might take a while...')
         
     return numpy.linalg.eig(a)
+
+# ------------------------- // ----------------------
+from sklearn.datasets import make_classification
+from sklearn.linear_model import LogisticRegression
+from sklearn.model_selection import train_test_split
+from sklearn.metrics import roc_curve
+from sklearn.metrics import roc_auc_score
+from matplotlib import pyplot
+
+# ROC curve and AUC
+def roc_n_plot(task=None, x=None, w=None, plot=False):
+    """
+    Predicting the probability of a binary outcome using the Receiver Operating Characteristic curve (ROC)
+    """
+    if not isinstance(task,str):
+        out = prmapping(roc_n_plot, task, x)
+        return out
+    if (task=='init'):
+        # Just return the name, and hyperparameters
+        if x is None:
+            x = ["generate dataset", 1000, 2, 1]
+            x = numpy.array(x)
+        return 'ROC', x
+    elif (task=='train'):
+        if w[0] == "generate dataset":
+            # Generate 2 class dataset
+            X, y = make_classification(n_samples=w[1], n_classes=w[2], random_state=w[3])
+        else:
+            X = w.data[:,0]
+            y = w.data[:,1]
+
+        # Split into train/test sets
+        trainX, testX, trainy, testy = train_test_split(X, y, test_size=0.5, random_state=2)
+        # Generate a no skill prediction (majority class)
+        ns_probs = [0 for _ in range(len(testy))]
+        # Fit a model
+        model = LogisticRegression(solver='lbfgs')
+        model = model.fit(trainX, trainy)
+        w._targets_ = testX
+        w.model = model
+        # Store the model 
+        return w
+    elif (task=='eval'):
+        if not w.model:
+            raise valueError("Error: No trained model - nothing to evaluate!")
+        # Predict probabilities
+        model = w.model
+        lr_probs = model.predict_proba(w._targets_)
+        # Keep probabilities for the positive outcome only
+        lr_probs = lr_probs[:, 1]
+        # Calculate scores
+        ns_auc = roc_auc_score(testy, ns_probs)
+        lr_auc = roc_auc_score(testy, lr_probs)
+        # Summarize scores
+        print('No Skill: ROC AUC=%.3f' % (ns_auc))
+        print('Logistic: ROC AUC=%.3f' % (lr_auc))
+        
+        # Plot the roc curve for the model
+        if plot:
+            # Calculate roc curves
+            ns_fpr, ns_tpr, _ = roc_curve(testy, ns_probs)
+            lr_fpr, lr_tpr, _ = roc_curve(testy, lr_probs)
+            # Plot
+            pyplot.plot(ns_fpr, ns_tpr, linestyle='--', label='No Skill')
+            pyplot.plot(lr_fpr, lr_tpr, marker='*', label='Logistic')
+            pyplot.ylabel('True Positive Rate')
+            pyplot.xlabel('False Positive Rate')
+            pyplot.legend()
+            pyplot.show()
+        # Return scores
+        return ns_auc, lr_auc

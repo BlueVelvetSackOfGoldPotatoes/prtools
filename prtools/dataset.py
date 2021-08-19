@@ -54,6 +54,7 @@ class prdataset(object):
         self._targets_ = []
         self.prior = []
         self.user = []
+        self.model = []
 
     def __str__(self):
         sz = self.data.shape
@@ -325,7 +326,7 @@ class prdataset(object):
                 print(targets)
 
 # === useful functions =====================================
-def scatterd(a,clrs=None):
+def scatterd(aclr,s=None):
     if (clrs is None):
         clrs = a.nlab().flatten()
     sz = a.data.shape
