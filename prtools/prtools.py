@@ -3201,50 +3201,37 @@ def roc_n_plot(task=None, x=None, w=None, plot=False):
     if (task=='init'):
         # Just return the name, and hyperparameters
         if x is None:
-            x = ["generate dataset", 1000, 2, 1]
-            x = numpy.array(x)
-        return 'ROC', x
-    elif (task=='train'):
-        if w[0] == "generate dataset":
-            # Generate 2 class dataset
-            X, y = make_classification(n_samples=w[1], n_classes=w[2], random_state=w[3])
+            optimizer = "lbfgs"
         else:
-            X = w.data[:,0]
-            y = w.data[:,1]
-
-        # Split into train/test sets
-        trainX, testX, trainy, testy = train_test_split(X, y, test_size=0.5, random_state=2)
-        # Generate a no skill prediction (majority class)
-        ns_probs = [0 for _ in range(len(testy))]
+            optimizer = x[0]
+        clf = LogisticRegression(solver=optimizer)
+        return 'ROC', clf
+    elif (task=='train'):
+        X = +x
+        y = numpy.ravel(x.targets)
+        clf = copy.deepcopy(w)
         # Fit a model
-        model = LogisticRegression(solver='lbfgs')
-        model = model.fit(trainX, trainy)
-        w._targets_ = testX
-        w._targets_ = numpy.array(w._targets_)
-        w._targets_ = numpy.concatenate((w._targets_, testy),axis=0)
-        w.model = model
-        # Store the model 
-        return w
+        clf.fit(X, y)
+        return clf, x.lablist()
     elif (task=='eval'):
-        if not w.model:
-            raise valueError("Error: No trained model - nothing to evaluate!")
-        # Predict probabilities
-        model = w.model
-        lr_probs = model.predict_proba(w._targets_[0])
+        clf = w.data
+        y = numpy.ravel(x.targets)
+        lr_probs = clf.predict_proba(+x)
         # Keep probabilities for the positive outcome only
         lr_probs = lr_probs[:, 1]
+        # Generate a no skill prediction (majority class)
+        ns_probs = [0 for _ in range(len(y))]
         # Calculate scores
-        ns_auc = roc_auc_score(w._targets_[1], ns_probs)
-        lr_auc = roc_auc_score(w._targets_[1], lr_probs)
+        ns_auc = roc_auc_score(y, ns_probs)
+        lr_auc = roc_auc_score(y, lr_probs)
         # Summarize scores
         print('No Skill: ROC AUC=%.3f' % (ns_auc))
         print('Logistic: ROC AUC=%.3f' % (lr_auc))
-        
         # Plot the roc curve for the model
         if plot:
             # Calculate roc curves
-            ns_fpr, ns_tpr, _ = roc_curve(w._targets_[1], ns_probs)
-            lr_fpr, lr_tpr, _ = roc_curve(w._targets_[1], lr_probs)
+            ns_fpr, ns_tpr, _ = roc_curve(y, ns_probs)
+            lr_fpr, lr_tpr, _ = roc_curve(y, lr_probs)
             # Plot
             pyplot.plot(ns_fpr, ns_tpr, linestyle='--', label='No Skill')
             pyplot.plot(lr_fpr, lr_tpr, marker='*', label='Logistic')
