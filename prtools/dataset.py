@@ -16,6 +16,10 @@ training and test set:
     b = a[:,:1]              only select the first feature
     c = a[30:50,:]           only select a few samples
 """
+# --- PRTOOLS DEPENDENCIES --- #
+import uci
+import prtools
+# ---------------------------- #
 
 import numpy
 import copy
@@ -54,7 +58,6 @@ class prdataset(object):
         self._targets_ = []
         self.prior = []
         self.user = []
-        self.model = []
 
     def __str__(self):
         sz = self.data.shape
@@ -176,7 +179,7 @@ class prdataset(object):
         return count
 
     # Set dataset name
-    def setname(name):
+    def setname(self, name):
         self.name = name
     
     # Get dataset name
@@ -326,7 +329,7 @@ class prdataset(object):
                 print(targets)
 
 # === useful functions =====================================
-def scatterd(aclr,s=None):
+def scatterd(a, clrs=None):
     if (clrs is None):
         clrs = a.nlab().flatten()
     sz = a.data.shape
@@ -340,6 +343,7 @@ def scatterd(aclr,s=None):
     plt.xlabel('Feature '+str(a.featlab[0]))
     plt.ylabel('Feature '+str(ylab))
     plt.winter()
+    plt.show()
 
 def scatter3d(a):
     clrs = a.nlab().flatten()
@@ -550,7 +554,6 @@ import numpy
 import math
 import numpy.matlib
 from scipy.spatial import distance_matrix
-# UNTESTED
 def gendatk(A=0, N=[], k=1, stdev=1):
     '''
     GENDATK K-Nearest neighbor data generation
@@ -591,10 +594,10 @@ def gendatk(A=0, N=[], k=1, stdev=1):
     lablist = A.lablist()
     B = []
     labels = []
-    for i in range(c):
-        a = __getitem__(A,j)
+    for j in range(c):
+        a = A.findclass(j)
         a.sort()
-        D, I = spa.distance_matrix(a, a)
+        I = distance_matrix(a, a)
         I = I[2:k+1,:]
         alf = numpy.random.randn(k,N[j]) * stdev
         nu = math.ceil(N[j] / getsize(a,1))
@@ -605,12 +608,16 @@ def gendatk(A=0, N=[], k=1, stdev=1):
 
         for f in range(n):
             b[:,f] = a[J,f] + sum(((a[J,f]*numpy.ones((1,k)) - numpy.reshape(a[I[:, J],f], k, N[j], order="F")).conj().T * alf.conj().T).conj().T / k, 1).conj().T
-        B = np.concatenate((B,b))
+        B = numpy.concatenate((B,b))
+        labels = [labels, numpy.matlib.repmat(lablist[j,:], N[j], 1)]
 
     C = A
     C.setdata(B)
+    # What are the targets here?
+    C.settargets(labels, C.targets)
     return C
 
+import math
 def gendatgauss(n=50, u=False, g=False, labtype='crisp'):
     cn = len(n)
     p = 0
@@ -661,7 +668,7 @@ def gendatgauss(n=50, u=False, g=False, labtype='crisp'):
         V = numpy.real(V)
         D = numpy.real(D)
         D = max(D,0)
-        appended = numpy.random.randn(n[i],k) @ sqrt(D) @ V.conj().T 
+        appended = numpy.random.randn(n[i],k) @ math.sqrt(D) @ V.conj().T 
         + numpy.tile(+u[i,:],(n[i],1))
         a =  numpy.append(a,[a, appended])
 
@@ -699,7 +706,7 @@ def gendatp(A=None, N=None, s=0, G=None):
        raise NameError("Data set, {}, is not defined!".format(A))
 
     if N is None:
-        N = 50*nrclasses(A)
+        N = 50*A.nrclasses()
     if G is None:
         G = numpy.identity(max(getsize(A,1), getsize(A,2)))
 
@@ -716,13 +723,10 @@ def gendatp(A=None, N=None, s=0, G=None):
 
     # if covariance matrix is not the identity matrix
     if G != covmatrix:
-        covmat_flag = 0
         if numpy.ndim(G) == 2:
             G = numpy.matlib.repmat(G, [1,1,c])
         if getsize(G, 1) != k or getsize(G, 2) != k or getsize(G, 3) != c:
             raise VelueError("Coariance matrix has wrong size: expected {0}, got {1}".format([k,k,c], getsize(G)))
-    else:
-        covmat_flag = 1
 
     N = genclass(N, p)
     lablist = A.lablist()
@@ -730,15 +734,15 @@ def gendatp(A=None, N=None, s=0, G=None):
     labels = []
 
     for j in range(c):
-        a = __getitem__(A, j)
+        a = A.findclass(j)
         a = prdataset(a)
         ma = getsize(a, 1)
         if s[j] == 0:
-            h = parzenml(a)
+            h = parzenml_vector(a)
         else:
             h = s[j]
 
-        if not covmat:
+        if not covmatrix:
             b = numpy.multiply(a[math.ceil[numpy.random.randn(N[j], 1) * ma], :] + numpy.random.randn(N[j], k), numpy.matlib.repmat(h,N[j],k))
         else:
             b = numpy.multiply(a[math.ceil[numpy.random.randn(N[j], 1) * ma], :] + gendatgauss(N[j], numpy.zeros(1, k), G[:,:,j]), numpy.matlib.repmat(h,N[j],k))
@@ -844,3 +848,29 @@ def gendatdd(n=100, d=2):
     data = prdataset(data, labs)
     data.name = 'Gaussian dataset'
     return data
+
+#--------------- // ----------------
+import matplotlib.colors
+from sklearn.datasets import make_blobs
+
+def gauss_multi_class(plot=False, binary=False, obs=1000, labels=4, features=2, cl_std=1.0, rs=1):
+    """
+    Generate random multi class gaussian distribution, convert to binary if necessary and plot it.
+
+    Example usage:
+        gauss_multi_class(True, True, 1000, 5, 2, 1, 1)
+    """
+    my_cmap = matplotlib.colors.LinearSegmentedColormap.from_list("", ["red","yellow","green"])
+    #Generating 1000 observations with 4 labels - multi class
+    data, labels = make_blobs(n_samples=obs, centers=labels, n_features=features, cluster_std=cl_std, random_state=rs)
+ 
+    if binary:
+        labels_orig = labels
+        labels = numpy.mod(labels_orig, 2)
+    if plot:
+        plt.scatter(data[:,0], data[:,1], c=labels, cmap=my_cmap)
+        plt.show()
+
+    a = prdataset(data, labels)
+    a.targettype = "gaussian"
+    return a

@@ -15,7 +15,7 @@ The implemented methods in this file are:
     parzenc   Parzen classifier
     knnc      k-Nearest neighbor classifier
     mogc      mixture of Gaussians classifier
-    ababoostc AdaBoost
+    adaboostc AdaBoost
     svc       support vector classifier
     loglc     logistic classifier
     dectreec  decision tree classifier
@@ -83,7 +83,10 @@ The datasets generated in this file:
     boomerangs   3D 2-class problem
 """
 
-from prtools import *
+# --- PRTOOLS DEPENDENCIES --- #
+import uci
+import dataset
+# ---------------------------- #    
 from sklearn import svm
 from sklearn import linear_model
 from sklearn import tree
@@ -1245,6 +1248,7 @@ def svc(task=None,x=None,w=None):
     'poly'      polynomial kernel with degree K_par
     'rbf'       RBF or Gaussian kernel with width K_par
                 (default, K_par = 1.)
+    
 
     Example:
     a = gendatb()
@@ -1268,6 +1272,8 @@ def svc(task=None,x=None,w=None):
         elif (kernel=='poly') or (kernel=='p'):
             clf = svm.SVC(kernel='poly',degree=x,gamma='auto',coef0=1.,C=C,probability=True)
             #clf = svm.SVC(kernel='poly',gamma=x,C=C,probability=True)
+        elif (kernel=='smo') or (kernel=='s'):
+            clf = svm.SVC(kernel='poly',degree=x,gamma='auto',coef0=1.,C=C,probability=True)
         else:
             #print("Supplied kernel is unknown, use RBF instead.")
             clf = svm.SVC(kernel='rbf',gamma=1./(x*x),C=C,probability=True)
@@ -2871,7 +2877,8 @@ def derls(DD, E, h, k, S):
     return F
 
 # UNTESTED
-def parzenml_vector(A=None, fid=[]):
+import math
+def parzenml_vector(A=None):
     '''
     PARZENML Optimum smoothing parameter in Parzen density estimation.
     
@@ -2899,7 +2906,7 @@ def parzenml_vector(A=None, fid=[]):
     DD =  scipy.spatial.distance.squareform(DD) + numpy.diag(1e70*numpy.ones((1,m)))
     E = min(DD)
     h = numpy.zeros((c,1))
-    h0 = sqrt(max(E))
+    h0 = math.sqrt(max(E))
 
     for j in range(c):
         S = SS[:,j]
@@ -2911,7 +2918,7 @@ def parzenml_vector(A=None, fid=[]):
             break
     
         a1 = (F1+m*k)*h1*h1
-        h2 = sqrt(a1/(m*k))
+        h2 = math.sqrt(a1/(m*k))
         F2 = derls(DD,E,h2,k,S)
 
         if abs(F2) < 1e-70 or abs(1e0-h1/h2) < 1e-6:
@@ -2925,9 +2932,9 @@ def parzenml_vector(A=None, fid=[]):
             iter = iter+1
             h3 = (h1*h1*h2*h2)*(F2-F1)/(F2*h2*h2-F1*h1*h1)
             if h3 < 0:
-                h3 = sqrt((F2+m*k)*h2*h2/(m*k))
+                h3 = math.sqrt((F2+m*k)*h2*h2/(m*k))
             else:
-                h3 = sqrt(h3)
+                h3 = math.sqrt(h3)
 
             h3 = h2 + alf*(h3-h2)
             F3 = derls(DD,E,h3,k,S)
@@ -2963,11 +2970,11 @@ def derlc(DD, E, h, k):
     return F
 
 import scipy
-from scipy.spatial import matrix_distance
-from scipy.spatial import distance
+from scipy.spatial import distance_matrix
 import numpy
+import math
 
-def parzenml_scalar(A=None, fid=[]):
+def parzenml_scalar(A=None):
     '''
     PARZENML Optimum smoothing parameter in Parzen density estimation.
     
@@ -2990,12 +2997,12 @@ def parzenml_scalar(A=None, fid=[]):
     m = getsize(A,1)
     k = getsize(A,2)
     # Euclidean distance
-    DD =  scipy.spatial.distance_matrix(A, A)
+    DD =  distance_matrix(A, A)
     # squared form
     DD =  scipy.spatial.distance.squareform(DD) + numpy.diag(1e70*numpy.ones((1,m)))
     E = min(DD)
 
-    h1 = sqrt(max(E))
+    h1 = math.sqrt(max(E))
     F1 = derlc(DD, E, h1, k)
 
     if abs(F1) < 1e-70:
@@ -3003,7 +3010,7 @@ def parzenml_scalar(A=None, fid=[]):
         return h
     
     a1 = (F1+m*k)*h1*h1
-    h2 = sqrt(a1/(m*k))
+    h2 = math.sqrt(a1/(m*k))
     F2 = derlc(DD,E,h2,k)
 
     if abs(F2) < 1e-70 or abs(1e0-h1/h2) < 1e-6:
@@ -3017,9 +3024,9 @@ def parzenml_scalar(A=None, fid=[]):
         iter = iter+1
         h3 = (h1*h1*h2*h2)*(F2-F1)/(F2*h2*h2-F1*h1*h1)
         if h3 < 0:
-            h3 = sqrt((F2+m*k)*h2*h2/(m*k))
+            h3 = math.sqrt((F2+m*k)*h2*h2/(m*k))
         else:
-            h3 = sqrt(h3)
+            h3 = math.sqrt(h3)
 
         h3 = h2 + alf*(h3-h2)
         F3 = derlc(DD,E,h3,k)
@@ -3154,7 +3161,7 @@ def getsize(w, dim=0):
     DESCRIPTION
     Returns size of the dataset A and the number of classes. C is determined from the number of labels stored in A.LABLIST. If DIM = 1,2 or 3, just one of these numbers is returned, e.g. C = GETSIZE(A,3).
     '''
-    
+    w = +w
     np_a = numpy.array(w).shape
     shape_s = numpy.append(np_a,len(w[0])) if isinstance(w[0][0], numpy.ndarray) else numpy.append(np_a, 1)
 
@@ -3191,14 +3198,14 @@ from sklearn.metrics import roc_auc_score
 from matplotlib import pyplot
 
 # ROC curve and AUC
-def roc_n_plot(task=None, x=None, w=None, plot=False):
+def roc_n_plot(task=None, x=None, w=None):
     """
     Predicting the probability of a binary outcome using the Receiver Operating Characteristic curve (ROC)
     """
     if not isinstance(task,str):
         out = prmapping(roc_n_plot, task, x)
         return out
-    if (task=='init'):
+    if (task=='init'):        
         # Just return the name, and hyperparameters
         if x is None:
             optimizer = "lbfgs"
@@ -3228,16 +3235,258 @@ def roc_n_plot(task=None, x=None, w=None, plot=False):
         print('No Skill: ROC AUC=%.3f' % (ns_auc))
         print('Logistic: ROC AUC=%.3f' % (lr_auc))
         # Plot the roc curve for the model
-        if plot:
-            # Calculate roc curves
-            ns_fpr, ns_tpr, _ = roc_curve(y, ns_probs)
-            lr_fpr, lr_tpr, _ = roc_curve(y, lr_probs)
-            # Plot
-            pyplot.plot(ns_fpr, ns_tpr, linestyle='--', label='No Skill')
-            pyplot.plot(lr_fpr, lr_tpr, marker='*', label='Logistic')
-            pyplot.ylabel('True Positive Rate')
-            pyplot.xlabel('False Positive Rate')
-            pyplot.legend()
-            pyplot.show()
+        # if plot:
+        #     # Calculate roc curves
+        #     ns_fpr, ns_tpr, _ = roc_curve(y, ns_probs)
+        #     lr_fpr, lr_tpr, _ = roc_curve(y, lr_probs)
+        #     # Plot
+        #     pyplot.plot(ns_fpr, ns_tpr, linestyle='--', label='No Skill')
+        #     pyplot.plot(lr_fpr, lr_tpr, marker='*', label='Logistic')
+        #     pyplot.ylabel('True Positive Rate')
+        #     pyplot.xlabel('False Positive Rate')
+        #     pyplot.legend()
+        #     pyplot.show()
+
         # Return scores
         return ns_auc, lr_auc
+    else:
+        raise ValueError("Task '%s' is *not* defined for multilayer classifier."%task)
+    
+# ------------------------- // ----------------------
+# Feed-forward neural net classifier
+def multilayer_classifier(task=None,x=None,w=None):
+    if not isinstance(task,str):
+        out = prmapping(multilayer_classifier,task,x)
+        return out
+    if (task=='init'):
+        # just return the name, and hyperparameters
+        if x is None:
+            max_iter = 300
+            # optimizer = "lm"
+        else:
+            max_iter = x[0]
+            # optimizer = x[1]
+        clf = MLPClassifier(random_state=1, max_iter=max_iter)
+        return 'multilayer classifier', clf
+    elif (task=='train'):
+        # we are going to train the mapping
+        X = +x
+        y = numpy.ravel(x.targets)
+        clf = copy.deepcopy(w)
+        clf.fit(X,y)
+        return clf,x.lablist()
+    elif (task=='eval'):
+        # we are applying to new data
+        clf = w.data
+        pred = clf.predict(+x) 
+        if (len(pred.shape)==1):
+            pred = pred[:,numpy.newaxis]
+            pred = numpy.hstack((-pred,pred))
+        return pred
+    else:
+        raise ValueError("Task '%s' is *not* defined for multilayer classifier."%task)
+
+# ------------------------- // ----------------------
+# Mean square using implicit Levenberg-Marquardt method
+# https://lmfit.github.io/lmfit-py/fitting.html
+from matplotlib import pyplot as plt
+def mean_square_fitting(a, y_pred, plot=False, alg=[]):
+
+    if not isinstance(x,prdataset):
+        raise valueError("Need a prdataset!")
+    if not alg:
+        alg="leastsq"
+        print("Defaulting method to Levenberg-Marquardt minimization algorithm...")
+
+    alg_list = ["leastsq", "least_squares", "differential_evolution", "differential_evolution", "brute", "basinhopping", "ampgo", "nelder", "lbfgsb", "powell", "cg", "newton", "cobyla", "bfgs", "tnc", "trust-ncg", "trust-exact", "trust-krylov", "trust-constr", "dogleg", "slsqp", "emcee", "shgo", "dual_annealing"]
+
+    if alg not in alg_list:
+        print("""Name of the fitting method to use. Valid values are:
+    1) ’leastsq’: Levenberg-Marquardt (default)
+    2) ’least_squares’: Least-Squares minimization, using Trust Region Reflective method
+    3) ’differential_evolution’: differential evolution
+    4) ’brute’: brute force method
+    5) ’basinhopping’: basinhopping
+    6) ’ampgo’: Adaptive Memory Programming for Global Optimization
+    7) ’nelder’: Nelder-Mead
+    8) ’lbfgsb’: L-BFGS-B
+    9) ’powell’: Powell
+    10) ’cg’: Conjugate-Gradient
+    11) ’newton’: Newton-CG
+    12) ’cobyla’: Cobyla
+    13) ’bfgs’: BFGS
+    14) ’tnc’: Truncated Newton
+    15) ’trust-ncg’: Newton-CG trust-region
+    16) ’trust-exact’: nearly exact trust-region
+    17) ’trust-krylov’: Newton GLTR trust-region
+    18) ’trust-constr’: trust-region for constrained optimization
+    19) ’dogleg’: Dog-leg trust-region
+    20) ’slsqp’: Sequential Linear Squares Programming
+    21) ’emcee’: Maximum likelihood via Monte-Carlo Markov Chain
+    22) ’shgo’: Simplicial Homology Global Optimization
+    23) ’dual_annealing’: Dual Annealing optimization""")
+        
+    p = lmfit.Parameters()
+    p.add_many(('a1', 4.), ('a2', 4.), ('t1', 3.), ('t2', 3., True))
+
+    X = +a
+    y = numpy.ravel(a.targets)
+    residuals = y-y_pred
+
+    # default algorithmic mehtod: leastsq, which is the Levenberg-Marquardt minimization algorithm
+    mi = lmfit.minimize(residuals, p, method=alg, nan_policy='omit')
+    lmfit.printfuncs.report_fit(mi.params, min_correl=0.5)
+
+    if plot:
+        plt.plot(X, y, 'b')
+        plt.plot(X, residuals[mi.params] + y, 'r', label='best fit')
+        plt.legend(loc='best')
+        plt.show()
+    
+    mi.params.add('__lnsigma', value=numpy.log(0.1), min=numpy.log(0.001), max=numpy.log(2))
+
+    res = lmfit.minimize(residuals, method=alg, nan_policy='omit', burn=300, steps=1000, thin=20,
+                     params=mi.params, is_weighted=False, progress=False)
+
+    if not res.success:
+        raise valueError("Error with minimizer!")
+
+    if plot:
+        plt.plot(res.acceptance_fraction, 'b')
+        plt.xlabel('walker')
+        plt.ylabel('acceptance fraction')
+
+    return res.covar
+
+# ------------------------- // ----------------------
+# Mean square 
+from sklearn.metrics import mean_squared_error
+def mean_square(a, y_pred, plot=False):
+    if not isinstance(x,prdataset):
+        raise valueError("Need a prdataset!")
+    y = numpy.ravel(a.targets)
+    return mean_squared_error(y, y_pred)
+
+# ------------------------ // -----------------------
+# Eval looks shady
+# Radial basis function neural network classifier
+def rbnc(task=None,x=None,w=None):
+    """Implementation of a Radial Basis Function Network"""
+    if not isinstance(task, str):
+        return prmapping(rbnc,task,x)
+    if (task=='init'):
+        if x is None:
+            x[0] = 2
+            x[1] = 0.01
+            x[2] = 100
+        x[3] = numpy.random.randn(x[0])
+        x[4] = numpy.random.randn(1)
+        return 'Radial Basis Function Network', x
+    elif task == 'train':
+        # we are going to train the mapping
+        k = w[0]
+        lr = w[1]
+        epochs = w[2]
+        w = w[3]
+        b = w[4]
+        X = +x
+        y = numpy.ravel(x.targets)
+        centers = prkmeans(X, k)
+        dMax = max([numpy.abs(c1 - c2) for c1 in centers for c2 in centers])
+        stds = numpy.repeat(dMax / numpy.sqrt(2*k), k)
+        print('Training {} epochs ...'.format(epochs))
+        for epoch in range(epochs):
+            for i in range(X.shape[0]):
+                # forward pass
+                a = numpy.array([numpy.exp(-1 / (2 * s**2) * (x-c)**2) for c, s, in zip(centers, stds)])
+                F = a.T.dot(w) + b
+                loss = (y[i] - F).flatten() ** 2
+                print('Loss: {0:.2f}'.format(loss[0]))
+                # backward pass
+                error = -(y[i] - F).flatten()
+                # online update
+                w = w - lr * a * error
+                b = b - lr * error
+        y_pred = []
+        for i in range(X.shape[0]):
+            a = numpy.array([numpy.exp(-1 / (2 * s**2) * (x-c)**2) for c, s, in zip(centers, stds)])
+            F = a.T.dot(w) + b
+            y_pred.append(F)
+        return numpy.array(y_pred)
+
+    elif task == 'eval':
+        # we are applying to new data
+        rbfnet = w.data
+        X = +w
+        noise = numpy.random.uniform(-0.1, 0.1, rbfnet)
+        y = numpy.sin(2 * numpy.pi * X)  + noise
+        pred = rbfnet.transform(y)
+        if len(pred.shape) == 1: # oh boy oh boy, we are in trouble
+            pred = pred[:, numpy.newaxis]
+        return pred
+    else:
+        raise ValueError("Task '%s' is *not* defined for lle."%task)
+
+# ------------------------ // -----------------------
+def parsc(w):
+    print("Type of w is {}".format(type(w)))
+    if not isintance(w, prmapping):
+        print("Not a prmapping!")
+        return
+
+    pars = w.data
+
+    # Equivalent to cell array in matlab is numpy array
+    if isinstance(pars, numpy.ndarray):
+        for i in range(len(pars)):
+            parsc(pars[i])
+
+# ------------------------ // -----------------------
+def distm(A=[], B=[]):
+    if not A:
+        raise valueError("Nothing to compute! Input arg A is none")
+    if not B:
+        B = A
+    if isinstance(A, prdataset):
+        A = A.data
+    if isinstance(B, prdataset):
+        A = B.data
+        
+    return numpy.sum(numpy.square(A - B))
+    
+# ------------------------ // -----------------------
+# weakc implements adaboost without an estimator: defaulting to DecisionTreeClassifier initialized with max_depth=1
+from sklearn.ensemble import AdaBoostClassifier
+def weakc(task=None,x=None,w=None):
+    if not isinstance(task,str):
+        out = prmapping(adaboost,task,x)
+        return out
+    if (task=='init'):
+        # just return the name, and hyperparameters
+        if x is None:
+            estimators = 50
+            alpha = 1
+        else:
+            estimators = x[0]
+            alpha = x[1]
+        abc = AdaBoostClassifier(n_estimators=estimators,learning_rate=alpha)
+        return 'adaboost classifier', abc
+    elif (task=='train'):
+        # we are going to train the mapping
+        X = +x
+        y = numpy.ravel(x.targets)
+        abc = copy.deepcopy(w)
+        abc.fit(X, y)
+        return abc,x.lablist()
+    elif (task=='eval'):
+        # we are applying to new data
+        abc = w.data
+        pred = abc.predict(+x) 
+        if (len(pred.shape)==1):
+            pred = pred[:,numpy.newaxis]
+            pred = numpy.hstack((-pred,pred))
+        return pred
+    else:
+        raise ValueError("Task '%s' is *not* defined for multilayer classifier."%task)
+
+# ------------------------ // -----------------------
