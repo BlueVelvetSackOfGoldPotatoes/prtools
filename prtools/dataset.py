@@ -24,6 +24,7 @@ import prtools
 import numpy
 import copy
 
+import math
 import matplotlib.pyplot as plt
 from scipy.cluster import hierarchy
 from mpl_toolkits import mplot3d
@@ -336,13 +337,73 @@ def scatterd(a, clrs=None):
     if (sz[1]>1):
         plt.scatter(a.data[:,0],a.data[:,1],c=clrs)
         ylab = a.featlab[1]
+
     else:
         plt.scatter(a.data[:,0],numpy.zeros((sz[0],1)),c=clrs)
         ylab = ''
+
     plt.title(a.name)
     plt.xlabel('Feature '+str(a.featlab[0]))
     plt.ylabel('Feature '+str(ylab))
     plt.winter()
+    plt.show()
+
+from matplotlib.widgets import Cursor
+def scatterdui(a, clrs=None):
+    fig, ax = plt.subplots()
+
+    if (clrs is None):
+        clrs = a.nlab().flatten()
+    sz = a.data.shape
+    if (sz[1]>1):
+        ax.scatter(a.data[:,0],a.data[:,1],c=clrs)
+        ylab = a.featlab[1]
+        x_data = a.data[:,0]
+        y_data = a.data[:,1]
+    else:
+        ax.scatter(a.data[:,0],numpy.zeros((sz[0],1)),c=clrs)
+        ylab = ''
+        x_data = a.data[:,0]
+        y_data = numpy.zeros((sz[0],1))
+
+    ax.grid()
+
+    # Defining the cursor
+    cursor = Cursor(ax, horizOn=True, vertOn=True, useblit=True,
+                    color = 'r', linewidth = 1)
+    # Creating an annotating box
+    annot = ax.annotate("", xy=(0,0), xytext=(-40,40),textcoords="offset points",
+                        bbox=dict(boxstyle='round4', fc='linen',ec='k',lw=1),
+                        arrowprops=dict(arrowstyle='-|>'))
+    annot.set_visible(False)
+    # Function for storing and showing the clicked values
+    coord = []
+    def onclick(event):
+        coord.append((event.xdata, event.ydata))
+        x = event.xdata
+        y = event.ydata
+
+        # select closest point in data too clicked coordinates
+        dist = math.sqrt(((x_data[0]-event.xdata)**2)+((y_data[0]-event.ydata)**2))
+        for c in range(len(x_data)):
+            new_dist = math.sqrt(((x_data[c]-event.xdata)**2)+((y_data[c]-event.ydata)**2))
+            if new_dist < dist:
+                x = x_data[c]
+                y = y_data[c]
+                dist = new_dist
+        
+        # printing the values of the selected point
+        print([x,y]) 
+        annot.xy = (x,y)
+        text = "({:.2g}, {:.2g})".format(x,y)
+        annot.set_text(text)
+        annot.set_visible(True)
+        fig.canvas.draw() 
+
+    plt.title(a.name)
+    plt.xlabel('Feature '+str(a.featlab[0]))
+    plt.ylabel('Feature '+str(ylab))
+    fig.canvas.mpl_connect('button_press_event', onclick)
     plt.show()
 
 def scatter3d(a):
