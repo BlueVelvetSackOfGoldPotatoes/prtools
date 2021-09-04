@@ -2,7 +2,7 @@
 THIS IS A SCRIPT TO DEBUG METHODS USED IN PRTOOLS INCLUDING METHODS CONTAINED IN PRTOOLS.PY, UCI.PY AND DATASET.PY
 """
 # --- PRTOOLS DEPENDENCIES --- #
-import prtools                 #
+from prtools import *          #
 from dataset import *          #
 from uci import *              #
 # ---------------------------- #
@@ -20,8 +20,7 @@ import sklearn
 """
 Solving...
     From ploting:
-		!Scatterdui
-		plotf
+		!plotf
 		gridsize
 		plote
 		hist2
@@ -43,8 +42,9 @@ def start():
 
 def main():
     start()
-    wine = read_mat("diabetes")
-    scatterdui(wine)
+    diabetes = read_mat("diabetes")
+    print(getsize(diabetes))
+    plotf(diabetes)
 
 if __name__ == '__main__':
     main()

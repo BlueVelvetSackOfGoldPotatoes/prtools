@@ -56,7 +56,7 @@ import copy
 import matplotlib.pyplot as plt
 from sklearn import linear_model
 
-from .dataset import prdataset
+from dataset import prdataset
 
 # === prmapping ============================================
 class prmapping(object):

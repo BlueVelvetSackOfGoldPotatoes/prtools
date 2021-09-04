@@ -17,13 +17,13 @@ training and test set:
     c = a[30:50,:]           only select a few samples
 """
 # --- PRTOOLS DEPENDENCIES --- #
-import uci
-import prtools
+from prtools import *          #
+from uci import *              #
 # ---------------------------- #
 
 import numpy
 import copy
-
+import seaborn as sns
 import math
 import matplotlib.pyplot as plt
 from scipy.cluster import hierarchy
@@ -366,11 +366,9 @@ def scatterdui(a, clrs=None):
         x_data = a.data[:,0]
         y_data = numpy.zeros((sz[0],1))
 
+
     ax.grid()
 
-    # Defining the cursor
-    cursor = Cursor(ax, horizOn=True, vertOn=True, useblit=True,
-                    color = 'r', linewidth = 1)
     # Creating an annotating box
     annot = ax.annotate("", xy=(0,0), xytext=(-40,40),textcoords="offset points",
                         bbox=dict(boxstyle='round4', fc='linen',ec='k',lw=1),
@@ -393,7 +391,7 @@ def scatterdui(a, clrs=None):
                 dist = new_dist
         
         # printing the values of the selected point
-        print([x,y]) 
+        print([x,y])
         annot.xy = (x,y)
         text = "({:.2g}, {:.2g})".format(x,y)
         annot.set_text(text)
@@ -401,9 +399,13 @@ def scatterdui(a, clrs=None):
         fig.canvas.draw() 
 
     plt.title(a.name)
-    plt.xlabel('Feature '+str(a.featlab[0]))
+    plt.xlabel('Feature '+str(a.featlab[0]))                                                                                
     plt.ylabel('Feature '+str(ylab))
     fig.canvas.mpl_connect('button_press_event', onclick)
+    cursor = Cursor(ax, horizOn=True, vertOn=True, useblit=True,
+                color = 'r', linewidth = 3)
+    fig.canvas.mpl_connect('motion_notify_event', cursor.onmove)
+
     plt.show()
 
 def scatter3d(a):
@@ -440,6 +442,16 @@ def scatterr(a):
         ax.set_zlabel('Targets')
     else:
         raise ValueError('Please supply at least 2D data.')
+
+def plotf(a, n=1):
+    print(a)
+    # for i in prtools.getsize(a)[1]:
+    #     print(i)
+        # Density Plot and Histogram of all arrival delays
+        # sns.distplot(a[n], hist=True, kde=True, 
+        #             bins=int(180/5), color = 'darkblue', 
+        #             hist_kws={'edgecolor':'black'},
+        #             kde_kws={'linewidth': 4})
 
 def dendro(X, link):
     """
@@ -646,7 +658,7 @@ def gendatk(A=0, N=[], k=1, stdev=1):
     if len(A) == 0:
         raise ValueError("Empty dataset!")
 
-    m, n, c = getsize(A)
+    m, n, c = prtools.getsize(A)
     prior = A.getprior()
 
     if len(N) == 0:
@@ -661,8 +673,8 @@ def gendatk(A=0, N=[], k=1, stdev=1):
         I = distance_matrix(a, a)
         I = I[2:k+1,:]
         alf = numpy.random.randn(k,N[j]) * stdev
-        nu = math.ceil(N[j] / getsize(a,1))
-        J = numpy.random.permutation(getsize(a,1))
+        nu = math.ceil(N[j] / prtools.getsize(a,1))
+        J = numpy.random.permutation(prtools.getsize(a,1))
         J = numpy.matlib.repmat(J, nu, 1).conj().T
         J = J[1:N[j]]
         b = numpy.zeros(N[j], n)
@@ -687,13 +699,13 @@ def gendatgauss(n=50, u=False, g=False, labtype='crisp'):
         u = numpy.zeros((cn, 1))
 
     if not g:
-        g = numpy.eye(getsize(u,1))
+        g = numpy.eye(prtools.getsize(u,1))
 
     if len(n) == 1 and n == 0:
         return prdataset([])
     
     if isinstance(u,prdataset):
-        m, k, c = getsize(u)
+        m, k, c = prtools.getsize(u)
         lablist = u.lablist()
         p = u.getprior()
         if c == 0:
@@ -716,7 +728,7 @@ def gendatgauss(n=50, u=False, g=False, labtype='crisp'):
         cg = 1
     else:
         g = numpy.real(g)
-        k1, k2, cg = getsize(g)
+        k1, k2, cg = prtools.getsize(g)
         if k1 != k or k2 != k:
             raise valueError("The number of dimensions of the means u and covariance matrices g do not match")
         if cg != m and cg != 1:
@@ -725,7 +737,7 @@ def gendatgauss(n=50, u=False, g=False, labtype='crisp'):
     a = numpy.array([])
     for i in range(len(m)):
         j = min(i, cg)
-        V, D = preig(g[:,:,j])
+        V, D = prtools.preig(g[:,:,j])
         V = numpy.real(V)
         D = numpy.real(D)
         D = max(D,0)
@@ -769,9 +781,9 @@ def gendatp(A=None, N=None, s=0, G=None):
     if N is None:
         N = 50*A.nrclasses()
     if G is None:
-        G = numpy.identity(max(getsize(A,1), getsize(A,2)))
+        G = numpy.identity(max(prtools.getsize(A,1), prtools.getsize(A,2)))
 
-    m, k, c = getsize(A)
+    m, k, c = prtools.getsize(A)
     p = A.getprior()
 
     if len(s) == 1:
@@ -780,14 +792,14 @@ def gendatp(A=None, N=None, s=0, G=None):
         raise ValueError("Wrong number of smoothing parameters: expected {}, got {}".format(c, len(s)))
 
     # If covariance matrices not specified, identity matrix assumed
-    covmatrix = numpy.identity(max(getsize(A,1), getsize(A,2)))
+    covmatrix = numpy.identity(max(prtools.getsize(A,1), prtools.getsize(A,2)))
 
     # if covariance matrix is not the identity matrix
     if G != covmatrix:
         if numpy.ndim(G) == 2:
             G = numpy.matlib.repmat(G, [1,1,c])
-        if getsize(G, 1) != k or getsize(G, 2) != k or getsize(G, 3) != c:
-            raise VelueError("Coariance matrix has wrong size: expected {0}, got {1}".format([k,k,c], getsize(G)))
+        if prtools.getsize(G, 1) != k or prtools.getsize(G, 2) != k or prtools.getsize(G, 3) != c:
+            raise ValueError("Coariance matrix has wrong size: expected {0}, got {1}".format([k,k,c], prtools.getsize(G)))
 
     N = genclass(N, p)
     lablist = A.lablist()
@@ -797,9 +809,9 @@ def gendatp(A=None, N=None, s=0, G=None):
     for j in range(c):
         a = A.findclass(j)
         a = prdataset(a)
-        ma = getsize(a, 1)
+        ma = prtools.getsize(a, 1)
         if s[j] == 0:
-            h = parzenml_vector(a)
+            h = prtools.parzenml_vector(a)
         else:
             h = s[j]
 
@@ -863,7 +875,7 @@ def gauss(N=50, u=0, g=0, plot=False):
     density = []
 
     # The same random density for all classes else dataset cannot be made (different dimensions)
-    rand_density = round(random.random(), 1)
+    rand_density = round(numpy.random.random(), 1)
     for i in range(len(g)):
         density.append(rand_density)
 

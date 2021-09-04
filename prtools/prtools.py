@@ -84,16 +84,16 @@ The datasets generated in this file:
 """
 
 # --- PRTOOLS DEPENDENCIES --- #
-import uci
-import dataset
-# ---------------------------- #    
+import dataset                 #
+import uci                     #
+import mapping                 #
+# ---------------------------- #
+import copy
+
 from sklearn import svm
 from sklearn import linear_model
 from sklearn import tree
-
 from sklearn.manifold import LocallyLinearEmbedding, Isomap
-
-
 # === mappings ===============================
 
 def scalem(task=None,x=None,w=None):
@@ -117,7 +117,7 @@ def scalem(task=None,x=None,w=None):
             x = task
             task = None
     if not isinstance(task,str): # direct call: return a mapping
-        return prmapping(scalem,task,x)
+        return dataset.mapping.prmapping(scalem,task,x)
     if (task=='init'):
         if x is None:                # default scaling
             x = {'scaling':'unitvar'}
@@ -169,14 +169,14 @@ def proxm(task=None,x=None,w=None):
             x = task
             task = None
     if not isinstance(task,str):
-        # A direct call to proxm, refer back to prmapping:
-        return prmapping(proxm,task,x)
+        # A direct call to proxm, refer back to mapping.prmapping:
+        return mapping.prmapping(proxm,task,x)
     if (task=='init'):
         # just return the name, and hyperparams
         return 'Proxm',x
     elif (task=='train'):
         # we only need to store the representation set
-        if (isinstance(x,prdataset)):
+        if (isinstance(x,dataset.prdataset)):
             R = +x
         else:
             R = numpy.copy(x)
@@ -241,7 +241,7 @@ def softmax(task=None,x=None,w=None):
     >> conf = +(a*w*softmax())
     """
     if not isinstance(task,str):
-        out = prmapping(softmax)
+        out = mapping.prmapping(softmax)
         out.mapping_type = "trained"
         if task is not None:
             out = out(task)
@@ -273,7 +273,7 @@ def classc(task=None,x=None,w=None):
     by the sum. It is therefore assumed that all values are positive.
     """
     if not isinstance(task,str):
-        out = prmapping(classc)
+        out = mapping.prmapping(classc)
         out.mapping_type = "trained"
         if task is not None:
             out = out(task)
@@ -289,7 +289,7 @@ def classc(task=None,x=None,w=None):
         if (numpy.any(+x<0.)):
             print('classc(): Suspicious negative values in Classc.')
         sumx = numpy.sum(+x,axis=1,keepdims=True)
-        if isinstance(x,prdataset):
+        if isinstance(x,dataset.prdataset):
             x.setdata( +x/sumx )
         else:
             x = x/sumx
@@ -313,7 +313,7 @@ def labeld(task=None,x=None,w=None):
     >> print(lab)
     """
     if not isinstance(task,str):
-        out = prmapping(labeld)
+        out = mapping.prmapping(labeld)
         out.mapping_type = "trained"
         if task is not None:
             out = out(task)
@@ -352,7 +352,7 @@ def testc(task=None,x=None,w=None):
     >> e = A*W*testc()
     """
     if not isinstance(task,str):
-        out = prmapping(testc)
+        out = mapping.prmapping(testc)
         out.mapping_type = "trained"
         if task is not None:
             out = out(task)
@@ -392,11 +392,11 @@ def mclassc(task=None,x=None,w=None):
     >> out = a*w
     """
     if not isinstance(task,str):
-        out = prmapping(mclassc,task,x)
+        out = mapping.prmapping(mclassc,task,x)
         return out
     if (task=='init'):
         # just return the name, and hyperparameters
-        if isinstance(x,prmapping):
+        if isinstance(x,mapping.prmapping):
             name = 'Multiclass '+x.name
         else:
             name = 'Multiclass'
@@ -444,7 +444,7 @@ def bayesrule(task=None,x=None,w=None):
     >> pred = +(a*w)
     """
     if not isinstance(task,str):
-        out = prmapping(bayesrule)
+        out = mapping.prmapping(bayesrule)
         out.mapping_type = "trained"
         return out
     if (task=='init'):
@@ -458,9 +458,9 @@ def bayesrule(task=None,x=None,w=None):
         # make sure that when a dataset is given as input, we also do
         # dataset out, and when a data matrix in, then also a matrix out:
         outputdataset = True
-        if not isinstance(x,prdataset):
+        if not isinstance(x,dataset.prdataset):
             outputdataset = False
-            x = prdataset(x)
+            x = dataset.prdataset(x)
         if (len(x.prior)>0):
             dat = x.data*x.prior
         else:
@@ -497,7 +497,7 @@ def gaussm(task=None,x=None,w=None):
 
     """
     if not isinstance(task,str):
-        out = prmapping(gaussm,task,x)
+        out = mapping.prmapping(gaussm,task,x)
         return out
     if (task=='init'):
         # just return the name, and hyperparameters
@@ -515,7 +515,7 @@ def gaussm(task=None,x=None,w=None):
         Z = numpy.zeros((c,1))
         # estimate the means and covariance matrices:
         for i in range(c):
-            xi = seldat(x,i)
+            xi = dataset.seldat(x,i)
             mn[i,:] = numpy.mean(+xi,axis=0)
             cv[i,:,:] = numpy.cov(+xi,rowvar=False)
         # depending of the type, we have to treat the cov's:
@@ -603,7 +603,7 @@ def nmc(task=None,x=None,w=None):
     the dataset A.
     """
     if not isinstance(task,str):
-        return prmapping(nmc,task,x)
+        return mapping.prmapping(nmc,task,x)
     if (task=='init'):
         # just return the name, and hyperparameters
         return 'Nearest mean', ()
@@ -612,9 +612,9 @@ def nmc(task=None,x=None,w=None):
         c = x.nrclasses()
         mn = numpy.zeros((c,x.shape[1]))
         v = 0.
-        prior = x.getprior()
+        prior = x.dataset.getprior()
         for i in range(c):
-            xi = seldat(x,i)
+            xi = dataset.dataset.seldat(x,i)
             mn[i,:] = numpy.mean(+xi,axis=0)
             v += prior[i]*numpy.mean(numpy.var(+xi,axis=0))
         # store the parameters, and labels:
@@ -640,7 +640,7 @@ def fisherc(task=None,x=None,w=None):
     dataset A by minimizing the errors in the least square sense.
     """
     if not isinstance(task,str):
-        out = prmapping(fisherc,task,x)
+        out = mapping.prmapping(fisherc,task,x)
         return out
     if (task=='init'):
         # just return the name, and hyperparameters
@@ -655,7 +655,7 @@ def fisherc(task=None,x=None,w=None):
         cv = numpy.zeros((dim,dim))
         v0 = 0.
         for i in range(c):
-            xi = seldat(x,i)
+            xi = dataset.dataset.seldat(x,i)
             mn[i,:] = numpy.mean(+xi,axis=0)
             thiscov = numpy.cov(+xi,rowvar=False)
             #DXD: is this a good idea?
@@ -694,7 +694,7 @@ def knnm(task=None,x=None,w=None):
     Default: K=1
     """
     if not isinstance(task,str):
-        return prmapping(knnm,task,x)
+        return mapping.prmapping(knnm,task,x)
     if (task=='init'):
         # just return the name, and hyperparameters
         if x is None:
@@ -753,7 +753,7 @@ def parzenm(task=None,x=None,w=None):
     Default H=1.
     """
     if not isinstance(task,str):
-        out = prmapping(parzenm,task,x)
+        out = mapping.prmapping(parzenm,task,x)
         return out
     if (task=='init'):
         # just return the name, and hyperparameters
@@ -775,7 +775,7 @@ def parzenm(task=None,x=None,w=None):
         Z = numpy.sqrt(2*numpy.pi)*h**dim
         out = numpy.zeros((n,nrcl))
         for i in range(nrcl):
-            xi = seldat(W,i)
+            xi = dataset.dataset.seldat(W,i)
             D = sqeucldist(+x,+xi)
             out[:,i] = numpy.sum( numpy.exp(-D/(2*h*h)), axis=1)/Z
         return out
@@ -808,7 +808,7 @@ def naivebm(task=None,x=None,w=None):
     Default DENS_M=gaussm()
     """
     if not isinstance(task,str):
-        return prmapping(naivebm,task,x)
+        return mapping.prmapping(naivebm,task,x)
     if (task=='init'):
         # just return the name, and hyperparameters
         if x is None:
@@ -828,8 +828,8 @@ def naivebm(task=None,x=None,w=None):
         W = w.data
         nrcl = len(w.targets)
         nrfeat = len(W)
-        if not isinstance(x,prdataset):
-            x = prdataset(x)
+        if not isinstance(x,dataset.prdataset):
+            x = dataset.prdataset(x)
         n,dim = x.shape
         out = numpy.ones((n,nrcl))
         for i in range(nrfeat):
@@ -877,7 +877,7 @@ def mog(task=None,x=None,w=None):
     >> plotm(w)
     """
     if not isinstance(task,str):
-        return prmapping(mog,task,x)
+        return mapping.prmapping(mog,task,x)
     if (task=='init'):
         # just return the name, and hyperparameters
         if x is None:
@@ -998,7 +998,7 @@ def mogm(task=None,x=None,w=None):
     >> plotm(w)
     """
     if not isinstance(task,str):
-        return prmapping(mogm,task,x)
+        return mapping.prmapping(mogm,task,x)
     if (task=='init'):
         # just return the name, and hyperparameters
         if x is None:
@@ -1010,7 +1010,7 @@ def mogm(task=None,x=None,w=None):
         c = x.nrclasses()
         g = []
         for i in range(c):
-            xi = seldat(x,i)
+            xi = dataset.dataset.seldat(x,i)
             g.append(mog(xi,w))
 
         # return the parameters, and feature labels
@@ -1019,8 +1019,8 @@ def mogm(task=None,x=None,w=None):
         # we are applying to new data
         W = w.data   # get the parameters out
         n,dim = x.shape
-        if not isinstance(x,prdataset):
-            x = prdataset(x)
+        if not isinstance(x,dataset.prdataset):
+            x = dataset.prdataset(x)
         k = len(W)
         out = numpy.zeros((n,k))
         for i in range(k):
@@ -1056,7 +1056,7 @@ def mogc(task=None,x=None,w=None):
 def baggingc(task=None,x=None,w=None):
     "Bagging"
     if not isinstance(task,str):
-        return prmapping(baggingc,task,x)
+        return mapping.prmapping(baggingc,task,x)
     if (task=='init'):
         # just return the name, and hyperparameters
         if x is None:
@@ -1067,7 +1067,7 @@ def baggingc(task=None,x=None,w=None):
         clsz = x.classsizes()
         f = []
         for t in range(w[1]):
-            xtr,xtst = gendat(x,clsz) # just a simple bootstrap
+            xtr,xtst = dataset.gendat(x,clsz) # just a simple bootstrap
             #DXD we could do feature subsampling as well..
             u = copy.deepcopy(w[0])
             f.append(u(xtr))
@@ -1094,7 +1094,7 @@ def baggingc(task=None,x=None,w=None):
 def stumpc(task=None,x=None,w=None):
     "Decision stump classifier"
     if not isinstance(task,str):
-        out = prmapping(stumpc,task,x)
+        out = mapping.prmapping(stumpc,task,x)
         return out
     if (task=='init'):
         # just return the name, and hyperparameters
@@ -1176,7 +1176,7 @@ def stumpc(task=None,x=None,w=None):
 def adaboostc(task=None,x=None,w=None):
     "AdaBoost classifier"
     if not isinstance(task,str):
-        out = prmapping(adaboostc,task,x)
+        out = mapping.prmapping(adaboostc,task,x)
         return out
     if (task=='init'):
         # just return the name, and hyperparameters
@@ -1192,7 +1192,7 @@ def adaboostc(task=None,x=None,w=None):
         y = 1 - 2*x.nlab()
         h = numpy.zeros((T,3))
 
-        tmp = prmapping(stumpc)
+        tmp = mapping.prmapping(stumpc)
         w = numpy.ones((N,1))
 
         alpha = numpy.zeros((T,1))
@@ -1221,7 +1221,7 @@ def adaboostc(task=None,x=None,w=None):
         W = w.data
         N = x.shape[0]
         pred = numpy.zeros((N,1))
-        tmp = prmapping(stumpc)
+        tmp = mapping.prmapping(stumpc)
         for t in range(len(W[1])):
             #print("Eval hypothesis %d in Adaboost" % t)
             tmp.data = W[0][t]
@@ -1255,7 +1255,7 @@ def svc(task=None,x=None,w=None):
     w = svc(a,('rbf',4,1))
     """
     if not isinstance(task,str):
-        out = prmapping(svc,task,x)
+        out = mapping.prmapping(svc,task,x)
         return out
     if (task=='init'):
         # just return the name, and hyperparameters
@@ -1310,7 +1310,7 @@ def loglc(task=None,x=None,w=None):
     w = loglc(a,(0.))
     """
     if not isinstance(task,str):
-        return prmapping(loglc,task,x)
+        return mapping.prmapping(loglc,task,x)
     if (task=='init'):
         # just return the name, and hyperparameters
         if x is None:
@@ -1372,7 +1372,7 @@ def loglc(task=None,x=None,w=None):
 def dectreec(task=None,x=None,w=None):
     "Decision tree classifier"
     if not isinstance(task,str):
-        out = prmapping(dectreec,task,x)
+        out = mapping.prmapping(dectreec,task,x)
         return out
     if (task=='init'):
         # just return the name, and hyperparameters
@@ -1414,7 +1414,7 @@ def lassoc(task=None,x=None,w=None):
     w = lassoc(a,(0.))
     """
     if not isinstance(task,str):
-        out = prmapping(lassoc,task,x)
+        out = mapping.prmapping(lassoc,task,x)
         return out
     if (task=='init'):
         # just return the name, and hyperparameters
@@ -1452,7 +1452,7 @@ def winnowc(task=None,x=None,w=None):
     to have a sparse solution. 
     """
     if not isinstance(task,str):
-        out = prmapping(winnowc,task,x)
+        out = mapping.prmapping(winnowc,task,x)
         return out
     if (task=='init'):
         # just return the name, and hyperparameters
@@ -1518,7 +1518,7 @@ def pcam(task=None,x=None,w=None):
     b = a*w
     """
     if not isinstance(task,str):
-        out = prmapping(pcam,task,x)
+        out = mapping.prmapping(pcam,task,x)
         return out
     if (task=='init'):
         # just return the name, and hyperparameters
@@ -1648,7 +1648,7 @@ def cleval(a,u,trainsize=[2,3,5,10,20,30],nrreps=3,testfunc=testc):
         #print("Cleval: iteration %d." % f)
         for i in range(N):
             sz = trainsize[i]*numpy.ones((1,nrcl))
-            x,z = gendat(a, sz[0],seed=f)
+            x,z = dataset.gendat(a, sz[0],seed=f)
             w = x*u
             err[i,f] = z*w*testfunc()
             err_app[i,f] = x*w*testfunc()
@@ -1687,7 +1687,7 @@ def clevalf(a,u,trainsize=0.6,nrreps=5,testfunc=testc):
     for f in range(nrreps):
         # print("Clevalf: iteration %d." % f)
         for i in range(1,dim):
-            x,z = gendat(a[:,:i], trainsize,seed=f)
+            x,z = dataset.gendat(a[:,:i], trainsize,seed=f)
             w = x*u
             err[i,f] = z*w*testfunc()
             err_app[i,f] = x*w*testfunc()
@@ -1705,9 +1705,9 @@ def clevalf(a,u,trainsize=0.6,nrreps=5,testfunc=testc):
 def vandermondem(task=None,x=None,w=None):
     "Vandermonde Matrix"
     if not isinstance(task,str):
-        out = prmapping(vandermondem,task,x)
+        out = mapping.prmapping(vandermondem,task,x)
         out.mapping_type = "trained"
-        if isinstance(task,prdataset):
+        if isinstance(task,dataset.prdataset):
             out = out(task)
         return out
     if (task=='init'):
@@ -1753,7 +1753,7 @@ def linearr(task=None,x=None,w=None):
     plotr(w3)
     """
     if not isinstance(task,str):
-        out = prmapping(linearr,task,x)
+        out = mapping.prmapping(linearr,task,x)
         return out
     if (task=='init'):
         # just return the name, and hyperparameters
@@ -1770,7 +1770,7 @@ def linearr(task=None,x=None,w=None):
         return beta,['target']
     elif (task=='eval'):
         # we are applying to new data
-        dat = +vandermondem(prdataset(x),w.hyperparam)
+        dat = +vandermondem(dataset.prdataset(x),w.hyperparam)
         return dat.dot(w.data)
     else:
         raise ValueError("Task '%s' is *not* defined for linearr."%task)
@@ -1794,7 +1794,7 @@ def ridger(task=None,x=None,w=None):
     plotr(w)
     """
     if not isinstance(task,str):
-        out = prmapping(ridger,task,x)
+        out = mapping.prmapping(ridger,task,x)
         return out
     if (task=='init'):
         # just return the name, and hyperparameters
@@ -1833,7 +1833,7 @@ def kernelr(task=None,x=None,w=None):
     plotr(w)
     """
     if not isinstance(task,str):
-        out = prmapping(kernelr,task,x)
+        out = mapping.prmapping(kernelr,task,x)
         return out
     if (task=='init'):
         # just return the name, and hyperparameters
@@ -1875,7 +1875,7 @@ def lassor(task=None,x=None,w=None):
     plotr(w)
     """
     if not isinstance(task,str):
-        out = prmapping(lassor,task,x)
+        out = mapping.prmapping(lassor,task,x)
         return out
     if (task=='init'):
         # just return the name, and hyperparameters
@@ -1912,7 +1912,7 @@ def testr(task=None,x=None,w=None):
         e = testr(a)
     """
     if not isinstance(task,str):
-        out = prmapping(testr)
+        out = mapping.prmapping(testr)
         out.mapping_type = "trained"
         if task is not None:
             out = out(task)
@@ -1952,20 +1952,20 @@ def hclust(D, ctype, K=None):
     'average'   uses the average of the distances of each observation of
                 the two sets  (DXD: Sorry, not implemented yet!)
     Example:
-    a = gendat()
+    a = dataset.gendat()
     D = a*proxm(a,('city'))   # use city-block distance
     dendro = hclust(D, 'single')
     plotdg(dendro)
 
     Or:
-    a = gendat()
+    a = dataset.gendat()
     D = a*proxm(a,('eucl'))
     lab = hclust(D, 'single', 3)
-    scatterd(prdataset(+a,lab))
+    scatterd(dataset.prdataset(+a,lab))
     """
     
     # some input checking:
-    D = +D # no prdataset is needed
+    D = +D # no dataset.prdataset is needed
     if (D.shape[0] != D.shape[1]):
         raise ValueError('Hclust expects a square distance matrix.')
     # distances to itself do not count:
@@ -2035,7 +2035,7 @@ def plotdg(dendr):
     Plot dendrogram DENDR, as it is generated from hclust.
 
     Example:
-    a = gendat()
+    a = dataset.gendat()
     D = sqeucldist(a,a)
     lab = hclust(D, 'single', 3)
     dendro = hclust(D, 'single')
@@ -2093,13 +2093,13 @@ def gendats(n,dim=2,delta=2.):
     first class can be shifted by an amount of DELTA.
     """
     prior = [0.5,0.5]
-    N = genclass(n,prior)
+    N = dataset.genclass(n,prior)
     x0 = numpy.random.randn(N[0],dim)
     x1 = numpy.random.randn(N[1],dim)
     x1[:,0] = x1[:,0] + delta  # move data from class 1
     x = numpy.concatenate((x0,x1),axis=0)
-    y = genlab(N,(-1,1))
-    out = prdataset(x,y)
+    y = dataset.genlab(N,(-1,1))
+    out = dataset.prdataset(x,y)
     out.name = 'Simple dataset'
     out.prior = prior
     return out
@@ -2115,7 +2115,7 @@ def gendatd(n,dim=2,delta=2.):
     first class can be shifted by an amount of DELTA.
     """
     prior = [0.5,0.5]
-    N = genclass(n,prior)
+    N = dataset.genclass(n,prior)
     x0 = numpy.random.randn(N[0],dim)
     x1 = numpy.random.randn(N[1],dim)
     x0[:,1:] *= numpy.sqrt(40)
@@ -2125,8 +2125,8 @@ def gendatd(n,dim=2,delta=2.):
     x = numpy.concatenate((x0,x1),axis=0)
     R = numpy.array([[1.,-1.],[1.,1.]])
     x[:,0:2] = x[:,0:2].dot(R)
-    y = genlab(N,(-1,1))
-    out = prdataset(x,y)
+    y = dataset.genlab(N,(-1,1))
+    out = dataset.prdataset(x,y)
     out.name = 'Difficult dataset'
     out.prior = prior
     return out
@@ -2146,7 +2146,7 @@ def gendatb(n=(50,50),s=1.0):
     """
     r = 5
     prior = [0.5,0.5]
-    N = genclass(n,prior)
+    N = dataset.genclass(n,prior)
     domaina = 0.125*numpy.pi + 1.25*numpy.pi*numpy.random.rand(N[0],1)
     a = numpy.concatenate((r*numpy.sin(domaina),r*numpy.cos(domaina)),axis=1)
     a += s*numpy.random.randn(N[0],2)
@@ -2157,8 +2157,8 @@ def gendatb(n=(50,50),s=1.0):
     b -= 0.75*r*numpy.ones((N[1],2))
 
     x = numpy.concatenate((a,b),axis=0)
-    y = genlab(N,(-1,1))
-    out = prdataset(x,y)
+    y = dataset.genlab(N,(-1,1))
+    out = dataset.prdataset(x,y)
     out.name = 'Banana dataset'
     out.prior = prior
     return out
@@ -2179,7 +2179,7 @@ def gendatc(n=(50,50),dim=2,mu=0.):
     P(1) = P(2) = 0.5.
     """
     prior = [0.5,0.5]
-    N = genclass(n,prior)
+    N = dataset.genclass(n,prior)
 
     x0 = numpy.random.randn(N[0],dim)
     x0[:,0] += mu
@@ -2189,8 +2189,8 @@ def gendatc(n=(50,50),dim=2,mu=0.):
         x1[:,1] *= 3.
 
     x = numpy.concatenate((x0,x1),axis=0)
-    y = genlab(N,(-1,1))
-    out = prdataset(x,y)
+    y = dataset.genlab(N,(-1,1))
+    out = dataset.prdataset(x,y)
     out.name = 'Circular dataset'
     out.prior = prior
     return out
@@ -2210,7 +2210,7 @@ def gendath(n=(50,50)):
     Class priors are P(1) = P(2) = 0.5 
     """
     prior = [0.5,0.5]
-    N = genclass(n,prior)
+    N = dataset.genclass(n,prior)
     x0 = numpy.random.randn(N[0],2)
     x0[:,0] = x0[:,0] + 1.     # feature 0 from class 0
     x0[:,1] = 0.5*x0[:,1] + 1  # feature 1 from class 0
@@ -2218,8 +2218,8 @@ def gendath(n=(50,50)):
     x1[:,0] = 0.1*x1[:,0] + 2. # feature 0 from class 1
     x1[:,1] = 2.*x1[:,1]       # feature 1 from class 1
     x = numpy.concatenate((x0,x1),axis=0)
-    y = genlab(N,(-1,1))
-    out = prdataset(x,y)
+    y = dataset.genlab(N,(-1,1))
+    out = dataset.prdataset(x,y)
     out.name = 'Highleyman dataset'
     out.prior = prior
     return out
@@ -2238,7 +2238,7 @@ def gendats3(n,dim=2,delta=2.):
     Class 2 has the mean at (0, +DELTA, 0, ..].
     P(1) = P(2) = P(3) = 1/3.
     """
-    N = genclass(n,[1./3,1./3,1./3])
+    N = dataset.genclass(n,[1./3,1./3,1./3])
     x0 = numpy.random.randn(N[0],dim)
     x1 = numpy.random.randn(N[1],dim)
     x2 = numpy.random.randn(N[2],dim)
@@ -2246,8 +2246,8 @@ def gendats3(n,dim=2,delta=2.):
     x1[:,0] += delta
     x2[:,1] += delta
     x = numpy.concatenate((x0,x1,x2),axis=0)
-    y = genlab(N,(1,2,3))
-    out = prdataset(x,y)
+    y = dataset.genlab(N,(1,2,3))
+    out = dataset.prdataset(x,y)
     out.name = 'Simple dataset'
     out.prior = [1./3,1./3,1./3]
     return out
@@ -2263,13 +2263,13 @@ def gendatsinc(n=25,sigm=0.1):
     """
     x = -5. + 10.*numpy.random.rand(n,1)
     y = numpy.sin(numpy.pi*x)/(numpy.pi*x) + sigm*numpy.random.randn(n,1)
-    out = prdataset(x,y)
+    out = dataset.prdataset(x,y)
     out.name = 'Sinc'
     return out
 
 def boomerangs(n=100):
     p = [1./2,1./2]
-    N = genclass(n, p)
+    N = dataset.genclass(n, p)
     t = numpy.pi * (-0.5 + numpy.random.rand(N[0],1))
 
     xa = 0.5*numpy.cos(t)           + 0.025*numpy.random.randn(N[0],1);
@@ -2285,8 +2285,8 @@ def boomerangs(n=100):
     xa = numpy.concatenate((xa,ya,za),axis=1)
     xb = numpy.concatenate((xb,yb,zb),axis=1)
     x = numpy.concatenate((xa,xb),axis=0)
-    y = genlab(N,(1,2))
-    a = prdataset(x,y)
+    y = dataset.genlab(N,(1,2))
+    a = dataset.prdataset(x,y)
     a.name = 'Boomerangs'
     a.prior = p
     return a
@@ -2301,7 +2301,7 @@ def prkmeans(a,K,maxiter=100):
     with maximum number of iterations MAXIT.
 
     Example:
-    a = gendat()
+    a = dataset.gendat()
     lab = kmeans(a, 3, 100)
     """
     # initialise the stuff:
@@ -2345,11 +2345,11 @@ def dbi(a, lab):
         that one is wrong (switched the order of 'mean' and 'sqrt'). 
 
         Example:
-        a = gendat()
+        a = dataset.gendat()
         lab = prkmeans(+a, (3, 150, 'random'))
         e = dbi(+a, lab)
     """
-    x = prdataset(a,lab)
+    x = dataset.prdataset(a,lab)
     # initialise variables:
     c = x.nrclasses()
     mn = numpy.zeros((c,x.shape[1]))
@@ -2358,7 +2358,7 @@ def dbi(a, lab):
 
     # estimate the means and average distances to cluster centers:
     for i in range(c):
-        xi = seldat(x,i)
+        xi = dataset.seldat(x,i)
         mi = numpy.mean(+xi,axis=0,keepdims=True)
         mn[i,:] = mi
         di = sqeucldist(+xi,mi)
@@ -2396,7 +2396,7 @@ def icam(task=None, x=None, w=None):
     """
 
     if not isinstance(task, str):
-        out = prmapping(icam, task, x)
+        out = mapping.prmapping(icam, task, x)
         return out
     if task == 'init':
         # just return the name, and hyperparameters
@@ -2462,7 +2462,7 @@ def fisherm(task=None, x=None, w=None):
         b = a*w
         """
     if not isinstance(task, str):
-        out = prmapping(fisherm, task, x)
+        out = mapping.prmapping(fisherm, task, x)
         return out
     if task == 'init':
         # just return the name, and hyperparameters
@@ -2478,7 +2478,7 @@ def fisherm(task=None, x=None, w=None):
         mn = numpy.zeros((c,dim))
         cv = numpy.zeros((dim,dim))
         for i in range(c):
-            xi = seldat(x,i)
+            xi = dataset.seldat(x,i)
             mn[i,:] = numpy.mean(+xi,axis=0)
             cv += numpy.cov(+xi,rowvar=False)
         # get largest eigenvectors of S_W^-1 S_B:
@@ -2512,7 +2512,7 @@ def llem(task=None, x=None, w=None):
     """
 
     if not isinstance(task, str):
-        out = prmapping(llem, task, x)
+        out = mapping.prmapping(llem, task, x)
         return out
     if task == 'init':
         # just return the name, and hyperparameters
@@ -2560,7 +2560,7 @@ def isomapm(task=None, x=None, w=None):
     """
 
     if not isinstance(task, str):
-        out = prmapping(isomapm, task, x)
+        out = mapping.prmapping(isomapm, task, x)
         return out
     if task == 'init':
         # just return the name, and hyperparameters
@@ -2617,16 +2617,16 @@ def feateval(task=None,x=None,w=None):
     >> e = feateval(A,['crossval',ldc(),10])
     """
     if not isinstance(task,str):
-        out = prmapping(feateval,x)
+        out = mapping.prmapping(feateval,x)
         out.mapping_type = "trained"
         if task is not None:
             out = out(task)
         return out
     if (task=='init'):
-        # find out if we use a prespecified criterion, on a prmapping
+        # find out if we use a prespecified criterion, on a mapping.prmapping
         if x is None:
             x = ldc()
-        if isinstance(x,prmapping):
+        if isinstance(x,mapping.prmapping):
             x = ['app.err.', x]
         if isinstance(x,tuple):
             x = list(x)
@@ -2647,6 +2647,7 @@ def feateval(task=None,x=None,w=None):
                 J = prcrossval(x,w.hyperparam[1],w.hyperparam[2])
                 J = numpy.mean(J)
         elif (w.hyperparam=='1NN'):
+            a = w.data
             # Leave-one-out 1-nearest neighbor
             lab = a.nlab()
             D = sqeucldist(+a,+a)
@@ -2660,7 +2661,7 @@ def feateval(task=None,x=None,w=None):
             dim = x.shape[1]
             mn = numpy.zeros((c,dim))
             for i in range(c):
-                xi = seldat(x,i)
+                xi = dataset.seldat(x,i)
                 mn[i,:] = numpy.mean(+xi,axis=0)
             D = sqeucldist(mn,mn)
             for i in range(c):
@@ -2672,7 +2673,7 @@ def feateval(task=None,x=None,w=None):
             dim = x.shape[1]
             mn = numpy.zeros((c,dim))
             for i in range(c):
-                xi = seldat(x,i)
+                xi = dataset.seldat(x,i)
                 mn[i,:] = numpy.mean(+xi,axis=0)
             D = sqeucldist(mn,mn)
             J = numpy.sum(D)/2.
@@ -2683,7 +2684,7 @@ def feateval(task=None,x=None,w=None):
             mn = numpy.zeros((c,dim))
             cv = numpy.zeros((c,dim,dim))
             for i in range(c):
-                xi = seldat(x,i)
+                xi = dataset.seldat(x,i)
                 mn[i,:] = numpy.mean(+xi,axis=0)
                 cv[i,:,:] = numpy.cov(+xi,rowvar=False)
             S_b = numpy.cov(mn,rowvar=False)  # between scatter
@@ -2704,11 +2705,11 @@ def featseli(task=None, x=None, w=None):
     criteria, see FEATEVAL.
 
     Example:
-    a = gendat()
+    a = dataset.gendat()
     w = featseli(a, (4,ldc()))
     """
     if not isinstance(task,str):
-        out = prmapping(featseli, task, x)
+        out = mapping.prmapping(featseli, task, x)
         return out
     if (task=='init'):
         # just return the name, and hyperparameters
@@ -2750,11 +2751,11 @@ def featself(task=None, x=None, w=None):
     criteria, see FEATEVAL.
 
     Example:
-    a = gendat()
+    a = dataset.gendat()
     w = featself(a, (4,ldc()))
     """
     if not isinstance(task,str):
-        out = prmapping(featself, task, x)
+        out = mapping.prmapping(featself, task, x)
         return out
     if (task=='init'):
         # just return the name, and hyperparameters
@@ -2806,11 +2807,11 @@ def featselb(task=None, x=None, w=None):
     criteria, see FEATEVAL.
 
     Example:
-    a = gendat()
+    a = dataset.gendat()
     w = featselb(a, (4,ldc()))
     """
     if not isinstance(task,str):
-        out = prmapping(featselb, task, x)
+        out = mapping.prmapping(featselb, task, x)
         return out
     if (task=='init'):
         # just return the name, and hyperparameters
@@ -3063,7 +3064,8 @@ def laplace(n=1, m=None, mu=None, S=None):
     if S is None:
         S = numpy.eye(m)
 
-    out = myexprnd(1,n,m)
+    # Generate exponential function
+    out = numpy.random.exponential(mu, m)
     
     for i in range(n):
         for j in range(m):
@@ -3084,7 +3086,7 @@ def lines5d(N=[50, 50, 50]):
 
     If N is a vector of sizes, exactly N(I) objects are generated for class I, I = 1,2.Default: N = [50 50 50].
     '''
-    N = genclass(N, numpy.ones(1,3)/3)
+    N = dataset.genclass(N, numpy.ones(1,3)/3)
     n1 = N[1]
     n2 = N[2]
     n3 = N[3]
@@ -3117,7 +3119,7 @@ def lines5d(N=[50, 50, 50]):
     a  = [a, [c2*s3 + (1-c2)*s4]]
     a  = [a, [c3*s5 + (1-c3)*s6]]
 
-    data = prdataset(a,genlab(N))
+    data = dataset.prdataset(a,dataset.genlab(N))
     data = data.setname('5D Lines')
     return data
 
@@ -3203,7 +3205,7 @@ def roc_n_plot(task=None, x=None, w=None):
     Predicting the probability of a binary outcome using the Receiver Operating Characteristic curve (ROC)
     """
     if not isinstance(task,str):
-        out = prmapping(roc_n_plot, task, x)
+        out = mapping.prmapping(roc_n_plot, task, x)
         return out
     if (task=='init'):        
         # Just return the name, and hyperparameters
@@ -3254,9 +3256,10 @@ def roc_n_plot(task=None, x=None, w=None):
     
 # ------------------------- // ----------------------
 # Feed-forward neural net classifier
+from sklearn.neural_network import MLPClassifier
 def multilayer_classifier(task=None,x=None,w=None):
     if not isinstance(task,str):
-        out = prmapping(multilayer_classifier,task,x)
+        out = mapping.prmapping(multilayer_classifier,task,x)
         return out
     if (task=='init'):
         # just return the name, and hyperparameters
@@ -3289,11 +3292,11 @@ def multilayer_classifier(task=None,x=None,w=None):
 # ------------------------- // ----------------------
 # Mean square using implicit Levenberg-Marquardt method
 # https://lmfit.github.io/lmfit-py/fitting.html
+from lmfit import *
 from matplotlib import pyplot as plt
 def mean_square_fitting(a, y_pred, plot=False, alg=[]):
-
-    if not isinstance(x,prdataset):
-        raise valueError("Need a prdataset!")
+    if not isinstance(a,dataset.prdataset):
+        raise valueError("Need a dataset.prdataset!")
     if not alg:
         alg="leastsq"
         print("Defaulting method to Levenberg-Marquardt minimization algorithm...")
@@ -3362,8 +3365,8 @@ def mean_square_fitting(a, y_pred, plot=False, alg=[]):
 # Mean square 
 from sklearn.metrics import mean_squared_error
 def mean_square(a, y_pred, plot=False):
-    if not isinstance(x,prdataset):
-        raise valueError("Need a prdataset!")
+    if not isinstance(a,dataset.prdataset):
+        raise valueError("Need a dataset.prdataset!")
     y = numpy.ravel(a.targets)
     return mean_squared_error(y, y_pred)
 
@@ -3373,7 +3376,7 @@ def mean_square(a, y_pred, plot=False):
 def rbnc(task=None,x=None,w=None):
     """Implementation of a Radial Basis Function Network"""
     if not isinstance(task, str):
-        return prmapping(rbnc,task,x)
+        return mapping.prmapping(rbnc,task,x)
     if (task=='init'):
         if x is None:
             x[0] = 2
@@ -3430,8 +3433,8 @@ def rbnc(task=None,x=None,w=None):
 # ------------------------ // -----------------------
 def parsc(w):
     print("Type of w is {}".format(type(w)))
-    if not isintance(w, prmapping):
-        print("Not a prmapping!")
+    if not isinstance(w, mapping.prmapping):
+        print("Not a mapping.prmapping!")
         return
 
     pars = w.data
@@ -3447,9 +3450,9 @@ def distm(A=[], B=[]):
         raise valueError("Nothing to compute! Input arg A is none")
     if not B:
         B = A
-    if isinstance(A, prdataset):
+    if isinstance(A, dataset.prdataset):
         A = A.data
-    if isinstance(B, prdataset):
+    if isinstance(B, dataset.prdataset):
         A = B.data
         
     return numpy.sum(numpy.square(A - B))
@@ -3459,7 +3462,7 @@ def distm(A=[], B=[]):
 from sklearn.ensemble import AdaBoostClassifier
 def weakc(task=None,x=None,w=None):
     if not isinstance(task,str):
-        out = prmapping(adaboost,task,x)
+        out = mapping.prmapping(adaboostc,task,x)
         return out
     if (task=='init'):
         # just return the name, and hyperparameters
