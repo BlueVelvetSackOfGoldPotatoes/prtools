@@ -12,7 +12,7 @@ Testing ...
     From Mapping
     From Feature Selection
 
-Solving...
+Solving ...
     From Dataset Related, Distribution, Generation, Data Attributes
         setlabtype()
     From ploting:
@@ -32,7 +32,7 @@ from prtools import *          #
 from dataset import *          #
 from uci import *              #
 # ---------------------------- #
-# --- Other DEPENDENCIES --- 
+# --- Other DEPENDENCIES ----- #
 import time            
 import numpy as np        
 import os
