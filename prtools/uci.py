@@ -82,6 +82,36 @@ def breast(getOnline=False):
     a = a[:,1:]
     return a
 
+# def diabetes():
+#     cl = ['present', 'absent']
+#     fl = ['NumPregnancies', 'plasmaGlucose' 'diastolicBloodPr', 'tricepsSkinfold', '2hrSerumInsulin', 'BodyMassIndex','DiabetesPedigreeFn', 'Age']
+#     fl = numpy.array(fl)
+#     cl = numpy.array(cl)
+#     data = loadmat(os.path.dirname(prtools.__file__) + '/data/diabetes.mat')
+#     # print(data['a'][0][0][0])
+#     # print(data['a'][0][0][1])
+#     # print(data['a'])
+#     # print("-----------------------------------")
+    
+#     # Features are the data points...
+#     features = data['a'][0][0][0]
+#     # labels are the classes...
+#     labels = data['a'][0][0][1]
+#     a = dataset.prdataset(features, labels)
+#     a.settargets(labels, features)
+
+#     # print(a._targetnames_)
+#     # print(len(labels))
+#     for label in range(8):
+#         for feature in range(768):
+#             if str(a[feature, label].gettargets('[1]')) == '[1]':
+#                 # print(str(a[feature, label].targets[0]))
+#                 # print(a[feature, label].targets[0].shape)
+#                 a[feature, label].settargets(a[feature, label].gettargets('[1]'), cl[0])
+#                 print(a[feature, label, 0])
+
+#     return a
+
 def read_mat(file):
     """
     Reads a dataset from a .mat file and converts it into a prdataset
@@ -89,10 +119,20 @@ def read_mat(file):
     :param file: name of .mat file to be read from the /data folder
     :return: a prdataset containing the features/labels read from the file
     """
-    data = loadmat(os.path.dirname(prtools.__file__) + '/data/' + file + '.mat')
+    data = loadmat(os.path.dirname(prtools.__file__) + '/data/' + file + '.mat'
+    )
     if file == 'diabetes' or file == 'mfeat_zer' or file == 'mfeat_pix':
         features = data['a'][0][0][0]
         labels = data['a'][0][0][1]
+
+        # print("-----------------------------------")
+        # print(data['a'][0][0][0])
+        # print(data['a'][0][0][1])
+        # print(data['a']) 
+        # print("features ",features)
+        # print("labels ",labels)
+        # print("-----------------------------------")
+
     else:
         features = data['a']['data'][0][0]
         labels = data['a']['nlab'][0][0]

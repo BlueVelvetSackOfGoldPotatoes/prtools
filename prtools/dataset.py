@@ -17,6 +17,7 @@ training and test set:
     c = a[30:50,:]           only select a few samples
 """
 # --- PRTOOLS DEPENDENCIES --- #
+from scipy.stats.morestats import fligner
 from prtools import *          #
 from uci import *              #
 # ---------------------------- #
@@ -328,7 +329,6 @@ class prdataset(object):
                 print("Cannot find targets ", I)
             else:
                 print(targets)
-
 # === useful functions =====================================
 def scatterd(a, clrs=None):
     if (clrs is None):
@@ -445,13 +445,22 @@ def scatterr(a):
 
 def plotf(a, n=1):
     print(a)
-    # for i in prtools.getsize(a)[1]:
-    #     print(i)
-        # Density Plot and Histogram of all arrival delays
-        # sns.distplot(a[n], hist=True, kde=True, 
-        #             bins=int(180/5), color = 'darkblue', 
-        #             hist_kws={'edgecolor':'black'},
-        #             kde_kws={'linewidth': 4})
+    featlab_n = prtools.getsize(a,2)
+    fig, ax = plt.subplots(n,len(range(featlab_n)))
+    
+    for i in range(featlab_n):
+        # print(i)
+        subset = a[:,i,:]
+        ylab = str(a.featlab[i])
+
+        # Density Plot and Histogram
+        sns.displot(data=subset.data[:,0], x=ylab, kind="kde", ax=ax, color='b')
+        ax2 = ax.twinx()
+        sns.displot(subset.data[:,1], x=ylab, kind="kde", ax=ax2, color='r')
+
+    plt.legend(labels=[str(a.targets[0]),str(a.targets[1])])
+    plt.title('Density Plot')
+    fig.show()
 
 def dendro(X, link):
     """
