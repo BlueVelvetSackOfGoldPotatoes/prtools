@@ -2,30 +2,111 @@
 THIS IS A SCRIPT TO DEBUG METHODS USED IN PRTOOLS INCLUDING METHODS CONTAINED IN PRTOOLS.PY, UCI.PY AND DATASET.PY
 
 Testing ...
-    From Dataset Related, Distribution, Generation, Data Attributes
-        !gauss 
+    From Dataset Related, Distribution, Generation, 
+        !extractClass
             *Goncalo
-    From Plotting
-    From Generic prtools
-    From Supervised methods
-    From Unsupervised methods
-    From Mapping
-    From Feature Selection
-
-Solving ...
-    From Dataset Related, Distribution, Generation, Data Attributes
-        setlabtype()
+        genlab
+        getlabels
+        getlablist
+        seldat
+        gendatb
+        gendatc
+        gendatd
+        gendath
+        gendatdd
+        setfeatlab
+        gendatk
+        gendatp
+        gendatgauss
+        gauss
+        gendats
+        gendat
+        getlab
+        getprior
+        setprior
+        gettargets
+        circles3d
+        lines5d
+        laplace
+        genregres
+        preig
+        getsize
+        setname
+        addlablist
+        nbayesc
+        setlabtype
+        curlablist
+        setlablist
+        getdata
+        genclass
+        Data Attributes
+        setlabtype
     From ploting:
 		!plotf 
             *Goncalo
-		gridsize
-		plote
-		hist2
+		scatterd
+        scatterdui
+        plotf
+        plotm
+        gridsize
+        plote
+        plotc
+        scatterr
+        hist2
     From Generic prtools
+        testc
+        double
+        crossval
+        roc
+        prwarning
+        distm
+        proxm
+        cleval
     From Supervised methods
+        qdc
+        loglc
+        parzenc
+        knnc
+        ldc
+        fisherc
+        nmc
+        treec
+        lmnc
+        rbnc
+        svc
+        svc_kernel
+        pairwise_km
+        combine_kernels
+        parsc
+        baggingc
+        stumpc
+        weakc
+        adaboostc
+        linearr
+        pamc
     From Unsupervised methods
+        pca
+        pcam
+        mds
+        interactclust
+        kmclust
+        prkmeans
+        hdb
+        em
     From Mapping
+        gaussm
+        parzenm
+        parzenml
+        knnm
+        fisherm
     From Feature Selection
+        fsel
+        featseli
+        featself
+        featselb
+        featsellr
+        featselo
+        featsel
 """
 # --- PRTOOLS DEPENDENCIES --- #
 from prtools import *          #
@@ -68,6 +149,7 @@ def start():
 def main():
     start()
     diabetes = read_mat("diabetes")
+    scatterdui(diabetes)
 
 if __name__ == '__main__':
     main()
@@ -85,7 +167,7 @@ SOME NOTES ...
 
 # In PRTools ‘+a’ is short for ‘double(a)’ where ‘a’ is a ‘dataset’, the effect is to retrieve just the ‘data’ field from a ‘dataset’ structure.
 
-# Checking datasets from .mat files in ./prtools/prtools/data folder:
+# Loading datasets from .mat files in ./prtools/prtools/data folder:
     a = read_mat('cigars')
     print(a)
     scatterd(a)

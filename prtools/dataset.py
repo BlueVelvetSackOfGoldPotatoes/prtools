@@ -403,7 +403,7 @@ def scatterdui(a, clrs=None):
     plt.ylabel('Feature '+str(ylab))
     fig.canvas.mpl_connect('button_press_event', onclick)
     cursor = Cursor(ax, horizOn=True, vertOn=True, useblit=True,
-                color = 'r', linewidth = 3)
+                color = 'r', linewidth = 1)
     fig.canvas.mpl_connect('motion_notify_event', cursor.onmove)
 
     plt.show()
@@ -604,6 +604,62 @@ def gendatr(x,targets):
     return a
 
 ############ NEW FUNCTIONS ############
+def extractClass(w, a):
+    '''
+    Input
+        w = data
+        a = class
+
+    return row in data equal to class a.
+    '''
+
+    lab = w.lablist()
+    final_rows = []
+
+    for r in lab:
+        for c in r:
+            if c == a:
+                final_rows.append(r)
+                break
+            
+    final_rows = numpy.array(final_rows)
+
+    return final_rows
+
+def getsize(w, dim=0):
+    '''
+    GETSIZE Dataset size and number of classes
+
+    [M,K,C] = GETSIZE(A,DIM)
+
+    INPUT
+        W    Dataset
+        DIM  1,2 or 3 : the number of the output argument to be returned
+
+    OUTPUT
+        M    Number of objects
+        K    Number of features
+        C    Number of classes
+
+    DESCRIPTION
+    Returns size of the dataset A and the number of classes. C is determined from the number of labels stored in A.LABLIST. If DIM = 1,2 or 3, just one of these numbers is returned, e.g. C = GETSIZE(A,3).
+    '''
+    w = +w
+    np_a = numpy.array(w).shape
+    shape_s = numpy.append(np_a,len(w[0])) if isinstance(w[0][0], numpy.ndarray) else numpy.append(np_a, 1)
+
+    if dim == 1:
+        s = shape_s[0]
+    elif dim == 2:
+        s = shape_s[1]
+    elif dim == 3:
+        s = shape_s[2]
+    elif dim == 0:
+        s = shape_s
+    else:
+        raise ValueError('Illegal parameter value')
+    return s
+
 from numpy.random import default_rng
 
 def exprnd(mu=0, m=0, n=0):
@@ -630,7 +686,6 @@ def exprnd(mu=0, m=0, n=0):
     exp_mat.targettype = 'exponential'
 
     return exp_mat
-
 
 import numpy
 import math
