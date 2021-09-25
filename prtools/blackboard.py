@@ -3,13 +3,13 @@ THIS IS A SCRIPT TO DEBUG METHODS USED IN PRTOOLS INCLUDING METHODS CONTAINED IN
 
 Testing ...
     From Dataset Related, Distribution, Generation, 
-        !extractClass
+        extractClass - Done
+        genlab - Done
+        getlabels - Missing
+        getlablist - Missing
+        seldat - Done
+        !gendatb
             *Goncalo
-        genlab
-        getlabels
-        getlablist
-        seldat
-        gendatb
         gendatc
         gendatd
         gendath
@@ -42,10 +42,9 @@ Testing ...
         Data Attributes
         setlabtype
     From ploting:
-		!plotf 
-            *Goncalo
-		scatterd
-        scatterdui
+		plotf 
+		scatterd 
+        scatterdui - Done
         plotf
         plotm
         gridsize
@@ -149,8 +148,10 @@ def start():
 def main():
     start()
     diabetes = read_mat("diabetes")
-    scatterdui(diabetes)
-
+    # out = seldat(diabetes, 1)
+    # print(out)
+    data = gendatb()
+    scatterdui(data)
 if __name__ == '__main__':
     main()
 

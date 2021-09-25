@@ -502,7 +502,9 @@ def seldat(x,cl):
     return newd[I[0],:]
 
 def genclass(n,p):
-    "Generate class frequency distribution"
+    """
+    Generate class frequency distribution
+    """
     if isinstance(n,int):
         n = [n]  # make a list
     n = numpy.asarray(n)
@@ -523,14 +525,18 @@ def genclass(n,p):
     return z
 
 def genlab(n,lab):
+    """
+    Example input:
+        [1,2,3], [1,6,7]
+    """
     if (isinstance(n,int)):
         n = [n]
     if (isinstance(lab,str)):
         lab = [lab]
-    if (len(n)!=len(lab)):
+    if (len(n) != len(lab)):
         raise ValueError('Number of values in N should match number in lab')
     out = numpy.repeat(lab[0],n[0])
-    for i in range(1,len(n)):
+    for i in range(0,len(n)):
         out=numpy.concatenate((out,numpy.repeat(lab[i],n[i])))
     
     return out
@@ -604,7 +610,7 @@ def gendatr(x,targets):
     return a
 
 ############ NEW FUNCTIONS ############
-def extractClass(w, a):
+def extractClass(w, a=[]):
     '''
     Input
         w = data
@@ -616,12 +622,16 @@ def extractClass(w, a):
     lab = w.lablist()
     final_rows = []
 
-    for r in lab:
-        for c in r:
-            if c == a:
-                final_rows.append(r)
-                break
-            
+    if a:
+        for r in lab:
+            if r == a:
+                    final_rows.append(r)
+                    break
+    else:
+        for r in lab:
+            print(r)
+            final_rows.append(r)
+        
     final_rows = numpy.array(final_rows)
 
     return final_rows
