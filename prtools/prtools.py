@@ -84,9 +84,12 @@ The datasets generated in this file:
 """
 
 # --- PRTOOLS DEPENDENCIES --- #
+import prtools                 #
+import mapping                 #
 import dataset                 #
 import uci                     #
-import mapping                 #
+from dataset import *          #
+from uci import *              #    
 # ---------------------------- #
 import copy
 
@@ -94,6 +97,7 @@ from sklearn import svm
 from sklearn import linear_model
 from sklearn import tree
 from sklearn.manifold import LocallyLinearEmbedding, Isomap
+import numpy
 # === mappings ===============================
 
 def scalem(task=None,x=None,w=None):
@@ -612,7 +616,7 @@ def nmc(task=None,x=None,w=None):
         c = x.nrclasses()
         mn = numpy.zeros((c,x.shape[1]))
         v = 0.
-        prior = x.dataset.getprior()
+        prior = x.getprior()
         for i in range(c):
             xi = dataset.dataset.seldat(x,i)
             mn[i,:] = numpy.mean(+xi,axis=0)
@@ -1648,7 +1652,7 @@ def cleval(a,u,trainsize=[2,3,5,10,20,30],nrreps=3,testfunc=testc):
         #print("Cleval: iteration %d." % f)
         for i in range(N):
             sz = trainsize[i]*numpy.ones((1,nrcl))
-            x,z = dataset.gendat(a, sz[0],seed=f)
+            x,z = gendat(a, sz[0],seed=f)
             w = x*u
             err[i,f] = z*w*testfunc()
             err_app[i,f] = x*w*testfunc()
@@ -2156,8 +2160,12 @@ def gendatb(n=(50,50),s=1.0):
     b += s*numpy.random.randn(N[1],2)
     b -= 0.75*r*numpy.ones((N[1],2))
 
+    print(len(a))
+    print(len(b))
     x = numpy.concatenate((a,b),axis=0)
+    print(len(x))
     y = dataset.genlab(N,(-1,1))
+    print(len(y))
     out = dataset.prdataset(x,y)
     out.name = 'Banana dataset'
     out.prior = prior
@@ -2854,10 +2862,17 @@ def featselb(task=None, x=None, w=None):
 def derls(DD, E, h, k, S):
     '''
     Computation of the likelihood derivative for Parzen density
-	given distances D and their object minima E (for increased accuracy) S are the object weights.
+	given distances DD and their object minima E (for increased accuracy) S are the object weights.
     '''
-    c = getsize(S,2)
-    m = getsize(DD,1)
+    if isinstance(S, list):
+        c = getsize(S,2)
+    else:
+        c = len(S)
+    if isinstance(S, list):
+        m = getsize(DD,1)
+    else:
+        m = len(DD)
+
     Y = (DD-numpy.matlib.repmat(E,m,1))/(2*h*h) if h != 0 else 0 # division by 0
     IY = numpy.where(Y<20)
     F = 0
@@ -2879,7 +2894,7 @@ def derls(DD, E, h, k, S):
 
 # UNTESTED
 import math
-def parzenml_vector(A=None):
+def parzenml_vector(A=[]):
     '''
     PARZENML Optimum smoothing parameter in Parzen density estimation.
     
@@ -2896,21 +2911,22 @@ def parzenml_vector(A=None):
 
             The dataset A can either be crisp or soft labeled. In case of crisp labeling the class information is not used and a single smoothing parameter is estimated. In case of soft labels a smoothing parameter for every class is estimated and objects are weighted in relation to their class weigthts (soft label value). It may be profitable to scale the data before calling it. eg.  WS = SCALEM(A,'variance'); A = A*WS.
     '''
-    if type(A) == 'class NoneType':
-        raise NameError("Data set, A, is not defined!")
+    if not A:
+        raise NameError("Data set A is not defined!")
     
-    SS = A.lablist()
+    # SS = A.lablist()
+    SS = +A
     m,k,c = getsize(A)
     # Euclidean distance
-    DD =  scipy.spatial.distance_matrix(A, A)
+    DD = scipy.spatial.distance_matrix(+A, +A)
     # squared form
     DD =  scipy.spatial.distance.squareform(DD) + numpy.diag(1e70*numpy.ones((1,m)))
     E = min(DD)
     h = numpy.zeros((c,1))
-    h0 = math.sqrt(max(E))
+    h0 = math.sqrt(max(DD))
 
-    for j in range(c):
-        S = SS[:,j]
+    for j in range(m):
+        S = SS[j:]
         h1 = h0
         F1 = derls(DD,E,h1,k,S)
 
@@ -2947,7 +2963,6 @@ def parzenml_vector(A=None):
         h[j] = h2
     return h
 
-import numpy
 import sys # for largest float
 import numpy.matlib
 
@@ -2975,7 +2990,7 @@ from scipy.spatial import distance_matrix
 import numpy
 import math
 
-def parzenml_scalar(A=None):
+def parzenml_scalar(A=[]):
     '''
     PARZENML Optimum smoothing parameter in Parzen density estimation.
     
@@ -2993,17 +3008,17 @@ def parzenml_scalar(A=None):
 
             The dataset A can either be crisp or soft labeled. In case of crisp labeling the class information is not used and a single smoothing parameter is estimated. In case of soft labels a smoothing parameter for every class is estimated and objects are weighted in relation to their class weigthts (soft label value). It may be profitable to scale the data before calling it. eg.  WS = SCALEM(A,'variance'); A = A*WS.
     '''
-    if type(A) == 'class NoneType':
-        raise NameError("Data set, A is not defined!")
+    if not A:
+        raise NameError("Data set A is not defined!")
     m = getsize(A,1)
     k = getsize(A,2)
     # Euclidean distance
-    DD =  distance_matrix(A, A)
+    DD =  distance_matrix(+A, +A)
     # squared form
     DD =  scipy.spatial.distance.squareform(DD) + numpy.diag(1e70*numpy.ones((1,m)))
     E = min(DD)
 
-    h1 = math.sqrt(max(E))
+    h1 = math.sqrt(max(DD))
     F1 = derlc(DD, E, h1, k)
 
     if abs(F1) < 1e-70:
@@ -3075,7 +3090,6 @@ def laplace(n=1, m=None, mu=None, S=None):
     out = out * sqrtm(S) + numpy.ones((n,1)) * mu
     return out
 
-# UNTESTED
 def lines5d(N=[50, 50, 50]):
     '''
     %LINES5D  Generates three 5-dimensional lines
@@ -3087,9 +3101,9 @@ def lines5d(N=[50, 50, 50]):
     If N is a vector of sizes, exactly N(I) objects are generated for class I, I = 1,2.Default: N = [50 50 50].
     '''
     N = dataset.genclass(N, numpy.ones(1,3)/3)
-    n1 = N[1]
-    n2 = N[2]
-    n3 = N[3]
+    n1 = N[0]
+    n2 = N[1]
+    n3 = N[2]
 
     s1 = [0, 0, 0, 1, 0]
     s2 = [1, 1, 1, 0, 0]
@@ -3122,62 +3136,6 @@ def lines5d(N=[50, 50, 50]):
     data = dataset.prdataset(a,dataset.genlab(N))
     data = data.setname('5D Lines')
     return data
-
-def extractClass(w, a):
-    '''
-    Input
-        w = data
-        a = class
-
-    return row in data equal to class a.
-    '''
-
-    lab = w.lablist()
-    final_rows = []
-
-    for r in lab:
-        for c in r:
-            if c == a:
-                final_rows.append(r)
-                break
-            
-    final_rows = numpy.array(final_rows)
-
-    return final_rows
-
-def getsize(w, dim=0):
-    '''
-    GETSIZE Dataset size and number of classes
-
-    [M,K,C] = GETSIZE(A,DIM)
-
-    INPUT
-        W    Dataset
-        DIM  1,2 or 3 : the number of the output argument to be returned
-
-    OUTPUT
-        M    Number of objects
-        K    Number of features
-        C    Number of classes
-
-    DESCRIPTION
-    Returns size of the dataset A and the number of classes. C is determined from the number of labels stored in A.LABLIST. If DIM = 1,2 or 3, just one of these numbers is returned, e.g. C = GETSIZE(A,3).
-    '''
-    w = +w
-    np_a = numpy.array(w).shape
-    shape_s = numpy.append(np_a,len(w[0])) if isinstance(w[0][0], numpy.ndarray) else numpy.append(np_a, 1)
-
-    if dim == 1:
-        s = shape_s[0]
-    elif dim == 2:
-        s = shape_s[1]
-    elif dim == 3:
-        s = shape_s[2]
-    elif dim == 0:
-        s = shape_s
-    else:
-        raise ValueError('Illegal parameter value')
-    return s
 
 def preig(a):
     '''
@@ -3371,7 +3329,7 @@ def mean_square(a, y_pred, plot=False):
     return mean_squared_error(y, y_pred)
 
 # ------------------------ // -----------------------
-# Eval looks shady
+# Eval looks strange
 # Radial basis function neural network classifier
 def rbnc(task=None,x=None,w=None):
     """Implementation of a Radial Basis Function Network"""
@@ -3379,6 +3337,7 @@ def rbnc(task=None,x=None,w=None):
         return mapping.prmapping(rbnc,task,x)
     if (task=='init'):
         if x is None:
+            x = numpy.zeros((5,), dtype=object)
             x[0] = 2
             x[1] = 0.01
             x[2] = 100
@@ -3450,11 +3409,15 @@ def distm(A=[], B=[]):
         raise valueError("Nothing to compute! Input arg A is none")
     if not B:
         B = A
+    elif len(A.data[:,0]) != len(B.data[:,0]):
+        raise valueError("Error! A and B have different sizes.")
     if isinstance(A, dataset.prdataset):
-        A = A.data
+        A = A.data[:,0]
+    else:
+        raise valueError("Nothing to compute! Input arg A is not a dataset!")
     if isinstance(B, dataset.prdataset):
-        A = B.data
-        
+        B = B.data[:,0]
+    
     return numpy.sum(numpy.square(A - B))
     
 # ------------------------ // -----------------------

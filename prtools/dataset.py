@@ -167,6 +167,10 @@ class prdataset(object):
                 self.featlab.append('Feature %d'%i)
         return self
 
+    # Return data
+    def getdata(self):
+        return self.data
+
     # Return number of objects of each unique classes (targets, or labels)
     def classsizes(self):
         if (self.targettype=='regression'):
@@ -729,7 +733,7 @@ def gendatk(A=0, N=[], k=1, stdev=1):
     
     if not A:
         raise ValueError("Dataset missing!")
-    if len(A) == 0:
+    if len(A.data) == 0:
         raise ValueError("Empty dataset!")
 
     m, n, c = prtools.getsize(A)
@@ -766,7 +770,7 @@ def gendatk(A=0, N=[], k=1, stdev=1):
 
 import math
 def gendatgauss(n=50, u=False, g=False, labtype='crisp'):
-    cn = len(n)
+    cn = n
     p = 0
 
     if not u:
@@ -775,7 +779,7 @@ def gendatgauss(n=50, u=False, g=False, labtype='crisp'):
     if not g:
         g = numpy.eye(prtools.getsize(u,1))
 
-    if len(n) == 1 and n == 0:
+    if n and n == 0:
         return prdataset([])
     
     if isinstance(u,prdataset):
@@ -831,7 +835,7 @@ import math
 import numpy.matlib
 from scipy.spatial import distance_matrix
 
-def gendatp(A=None, N=None, s=0, G=None):
+def gendatp(A=None, N=None, s=1, G=None):
     '''
     GENDATP Parzen density data generation
     
@@ -853,25 +857,25 @@ def gendatp(A=None, N=None, s=0, G=None):
        raise NameError("Data set, {}, is not defined!".format(A))
 
     if N is None:
-        N = 50*A.nrclasses()
+        N = 50*len(A.targets)
     if G is None:
         G = numpy.identity(max(prtools.getsize(A,1), prtools.getsize(A,2)))
 
     m, k, c = prtools.getsize(A)
     p = A.getprior()
 
-    if len(s) == 1:
+    if s:
         s = numpy.matlib.repmat(s, 1, c)
-    if len(s) != c:
-        raise ValueError("Wrong number of smoothing parameters: expected {}, got {}".format(c, len(s)))
+        if len(s) != c:
+            raise ValueError("Wrong number of smoothing parameters: expected {}, got {}".format(c, len(s)))
 
     # If covariance matrices not specified, identity matrix assumed
     covmatrix = numpy.identity(max(prtools.getsize(A,1), prtools.getsize(A,2)))
 
     # if covariance matrix is not the identity matrix
-    if G != covmatrix:
+    if numpy.allclose(G, covmatrix):
         if numpy.ndim(G) == 2:
-            G = numpy.matlib.repmat(G, [1,1,c])
+            G = numpy.matlib.repmat(G, [1,1,c]) # Repmat missing an argument
         if prtools.getsize(G, 1) != k or prtools.getsize(G, 2) != k or prtools.getsize(G, 3) != c:
             raise ValueError("Coariance matrix has wrong size: expected {0}, got {1}".format([k,k,c], prtools.getsize(G)))
 
@@ -981,7 +985,7 @@ def gendatdd(n=100, d=2):
     dimensions contain fully separated Gaussian distributed data; the others 
     contain unit covariance Gaussian noise.
     '''
-    data = gauss(n, 2*numpy.zeroes((1, d)), 5*numpy.eye(d), False)
+    data = gauss(n, 2*numpy.zeros((1, d)), 5*numpy.eye(d), False)
 
     a = gauss(math.floor(n/2),[0, 0],numpy.array([[3, -2.5], [-2.5, 3]]), False)
     
@@ -1000,7 +1004,7 @@ def gendatdd(n=100, d=2):
 import matplotlib.colors
 from sklearn.datasets import make_blobs
 
-def gauss_multi_class(plot=False, binary=False, obs=1000, labels=4, features=2, cl_std=1.0, rs=1):
+def gauss_multi_class(plot=True, binary=False, obs=1000, labels=4, features=2, cl_std=1.0, rs=1):
     """
     Generate random multi class gaussian distribution, convert to binary if necessary and plot it.
 
@@ -1021,3 +1025,59 @@ def gauss_multi_class(plot=False, binary=False, obs=1000, labels=4, features=2, 
     a = prdataset(data, labels)
     a.targettype = "gaussian"
     return a
+
+def extractClass(w, a):
+    '''
+    Input
+        w = data
+        a = class
+
+    return row in data equal to class a.
+    '''
+
+    lab = w.lablist()
+    final_rows = []
+
+    for r in lab:
+        for c in r:
+            if c == a:
+                final_rows.append(r)
+                break
+            
+    final_rows = numpy.array(final_rows)
+
+    return final_rows
+
+def getsize(w, dim=0):
+    '''
+    GETSIZE Dataset size and number of classes
+
+    [M,K,C] = GETSIZE(A,DIM)
+
+    INPUT
+        W    Dataset
+        DIM  1,2 or 3 : the number of the output argument to be returned
+
+    OUTPUT
+        M    Number of objects
+        K    Number of features
+        C    Number of classes
+
+    DESCRIPTION
+    Returns size of the dataset A and the number of classes. C is determined from the number of labels stored in A.LABLIST. If DIM = 1,2 or 3, just one of these numbers is returned, e.g. C = GETSIZE(A,3).
+    '''
+    w = +w
+    np_a = numpy.array(w).shape
+    shape_s = numpy.append(np_a,len(w[0][:])) if isinstance(w[0][0], numpy.ndarray) else numpy.append(np_a, 1)
+
+    if dim == 1:
+        s = shape_s[0]
+    elif dim == 2:
+        s = shape_s[1]
+    elif dim == 3:
+        s = shape_s[2]
+    elif dim == 0:
+        s = shape_s
+    else:
+        raise ValueError('Illegal parameter value')
+    return s

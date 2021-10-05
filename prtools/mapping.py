@@ -177,7 +177,6 @@ class prmapping(object):
         else:  # just return what the mapping did
             return out
 
-
     def __call__(self,x):
         if (self.mapping_type=='untrained'):
             # train
