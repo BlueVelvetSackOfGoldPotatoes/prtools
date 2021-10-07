@@ -4,12 +4,15 @@ THIS IS A SCRIPT TO DEBUG METHODS USED IN PRTOOLS INCLUDING METHODS CONTAINED IN
 There are notes regarding the debugging of this program to be read in the README.txt.
 
 Testing ...
-    From Dataset Related, Distribution, Generation, 
+    From Dataset Related, Distribution, Generation,
+        mogc - Implemented | Working
         extractClass - Implemented | Working
         genlab - Implemented | Working
         getlabels - Not Implemented
         getlablist - Not Implemented
         seldat - Implemented | Working
+        boomerangs - Implemented | Working
+        variances - Implemented | Working
         gendatsinc - Implemented | Working
         gendats3 - Implemented | Working
         gendatb - Implemented | Working
@@ -26,9 +29,9 @@ Testing ...
         gendats - Implemented | Not Working
         gendat - Implemented | Working
         getlab - Not Implemented
-        getprior - Not Implemented
+        getprior - Implemented | Working
         setprior - Not Implemented
-        gettargets - Not Implemented
+        gettargets - Implemented | Working
         circles3d - Not Implemented
         lines5d - Implemented | Not Working
         laplace - Implemented | Not Working
@@ -49,9 +52,10 @@ Testing ...
 		plotf - Implemented | Not Working
 		scatterd - Implemented | Working
         scatterdui - Implemented | Working
-        plotm - Not Implemented
+        plotm - Implemented | Working
         plote - Not Implemented
-        plotc - Not Implemented
+        plotc - Implemented | Working
+        plotdg - Implemented | Working
         scatterr - Implemented | Not Working
         hist2 - Not Implemented
         roc_n_plot - Implemented | Working
@@ -80,6 +84,7 @@ Testing ...
         nmc - Implemented | Working (initialization)
         dectreec - Implemented | Working (initialization)
         lmnc - Not Implemented
+        lassoc - Implemented | Working
         svc - Implemented | Working (initialization)
         svc_kernel - Not Implemented
         pairwise_km - Not Implemented
@@ -92,25 +97,31 @@ Testing ...
         linearr - Implemented | Working
         pamc - Not Implemented
     From Unsupervised methods
+        hclust - Implemented | Working
         pcam - Implemented | Working
         mds - Not Implemented
         interactclust - Not Implemented
         kmclust - Not Implemented
+        ridger - Implemented | Working
+        lassor - Implemented | Working
         prkmeans - Implemented | Working
+        kmeans - Implemented | Working
         hdb - Not Implemented
         em - Not Implemented
     From Mapping
+        llem - Implemented | Working
+        isomapm - Implemented | Working
         gaussm - Implemented | Working (initialization) 
         parzenm - Implemented | Working (initialization) 
         knnm - Implemented | Working (initialization) 
         fisherm - Implemented | Working (initialization) 
     From Feature Selection
         fsel - Not Implemented
-        featseli - Not Implemented
-        featself - Not Implemented
-        featselb - Not Implemented
+        featseli - Implemented | Working
+        featself - Implemented | Working
+        featselb - Implemented | Working
         featsellr - Not Implemented
-        featselo - Not Implemented
+        featselo - Implemented | Working
         featsel - Not Implemented
 """
 # --- PRTOOLS DEPENDENCIES --- #
@@ -149,16 +160,10 @@ def start():
 
 def main():
     start()
+    # Load a dataset
     a = read_mat("diabetes")
-    # print(a.lablist())
-    # print(getsize(a))
-    w = gendatk(a)
-    print(w)
-    # print(+a)
-    # w = scipy.spatial.distance_matrix(a.data, a.data)
-
-    # w = a*u
-    # out = roc_n_plot(diabetes, 2)
+    # Visualize the dataset
+    scatterdui(a)
 
 if __name__ == '__main__':
     main()
