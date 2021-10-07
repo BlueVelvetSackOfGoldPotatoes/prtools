@@ -705,7 +705,7 @@ import numpy
 import math
 import numpy.matlib
 from scipy.spatial import distance_matrix
-def gendatk(A=0, N=[], k=1, stdev=1):
+def gendatk(A=[], N=[], k=1, stdev=1):
     '''
     GENDATK K-Nearest neighbor data generation
     
@@ -908,7 +908,7 @@ def gendatp(A=None, N=None, s=1, G=None):
 import matplotlib.pyplot as plt
 from numpy.random import default_rng
 
-def gauss(N=50, u=0, g=0, plot=False):
+def gauss(N=50, u=[], g=[], plot=False):
     '''
     @var classes - a scalar, number of classes
     @var density - an array of densities
@@ -933,22 +933,17 @@ def gauss(N=50, u=0, g=0, plot=False):
         labels=['classe1', 'classe2']
         dataset = gauss(N, u, g, labels)
     '''
-    if not u:
+    if u.any():
         u = numpy.zeros(N,1)
-    if not g:  
+    elif u.ndim > 2:
+        raise ValueError('Mean matrix is formated for 3d not 2d!')
+    if g.any():  
         g = numpy.eye(N)
+    elif g.ndim > 2:
+        raise ValueError('Covariate matrix is 3d not 2d!')
 
     g = numpy.array(g)
     u = numpy.array(u)
-
-    if g.shape[2] > 2:
-        raise ValueError('Covariate matrix is 3d not 2d!')
-
-    if len(u[0]) > 2:
-        raise ValueError('Mean matrix is formated for 3d not 2d!')
-
-    if len(g) != len(u):
-        raise ValueError('Matrix cov and mean have different lengths!')
 
     density = []
 
@@ -962,7 +957,7 @@ def gauss(N=50, u=0, g=0, plot=False):
     dataset = []
     # This line is responsible to generate len(density) number of classes
     for i in range(len(density)):
-        x = numpy.random.multivariate_normal(u[i], g[i], Ns[i]).T
+        x = numpy.random.multivariate_normal(u[i], g[i:], size=Ns[i]).T
         dataset.append(x)
         if plot:
             rgb = numpy.random.rand(3,)

@@ -1,6 +1,8 @@
 """
 THIS IS A SCRIPT TO DEBUG METHODS USED IN PRTOOLS INCLUDING METHODS CONTAINED IN PRTOOLS.PY, UCI.PY AND DATASET.PY
 
+There are notes regarding the debugging of this program to be read in the README.txt.
+
 Testing ...
     From Dataset Related, Distribution, Generation, 
         extractClass - Implemented | Working
@@ -8,14 +10,16 @@ Testing ...
         getlabels - Not Implemented
         getlablist - Not Implemented
         seldat - Implemented | Working
-        !gendatb - Implemented | Not Working
-             *Goncalo
-        gendatc - Implemented | Not Working
-        gendatd - Implemented | Not Working
-        gendath - Implemented | Not Working
-        gendatdd - Implemented | Not Working
+        gendatsinc - Implemented | Working
+        gendats3 - Implemented | Working
+        gendatb - Implemented | Working
+        gendatc - Implemented | Working
+        gendatd - Implemented | Working
+        gendath - Implemented | Working
+        gendatdd - Implemented | Not Working because of gauss dependency
         setfeatlab - Not Implemented
-        gendatk - Implemented | Not Working
+        !gendatk - Implemented | Not Working
+            *Goncalo
         gendatp - Implemented | Not Working
         gendatgauss - Implemented | Not Working
         gauss - Implemented | Not Working
@@ -115,18 +119,14 @@ from dataset import *          #
 from uci import *              #
 # ---------------------------- #
 # --- Other DEPENDENCIES ----- #
-import time            
-import numpy as np        
+import time                  
 import os
-import glob
-import ntpath
-import math
-import scipy
-import sklearn
-import matplotlib.pyplot as plt
 # ---------------------------- #
 
 def start():
+    """
+    Import libraries, load dependencies and output who is working on what.
+    """
     print("Importing libs ...")
     time.sleep(1)
     os.system("clear")
@@ -145,14 +145,14 @@ def start():
 
     print("Currently working on ...")    
     for i in range(len(active_list)):
-         print("{0} by {1}".format(active_list[i], worker_list[i]))
+        print("{0} \n  - {1}".format(active_list[i], worker_list[i]))
 
 def main():
     start()
     a = read_mat("diabetes")
     # print(a.lablist())
     # print(getsize(a))
-    w = fisherm(a)
+    w = gendatk(a)
     print(w)
     # print(+a)
     # w = scipy.spatial.distance_matrix(a.data, a.data)
@@ -162,51 +162,3 @@ def main():
 
 if __name__ == '__main__':
     main()
-
-'''
-SOME NOTES ...
-# Run prstartup.m first in Matlab before running any code.
-
-# Helper websites while translating:
-    https://numpy.org/doc/stable/user/numpy-for-matlab-users.html
-    https://www.mathworks.com/help/matlab/matlab_prog/matlab-operators-and-special-characters.html
-
-# PRTools Matlab path:
-    ./prtools/BioSB-MachineLearning-2020_Translation/BioSB_essentials/Data_and_code/Data_and_code/prtools4112
-
-# MAPPING.PY - how to train a mapping and evaluate a dataset
-    w = nmc()
-    w.train(a)
-    b = w.eval(a)
-    print(b)
-
-# In PRTools ‘+a’ is short for ‘double(a)’ where ‘a’ is a ‘dataset’, the effect is to retrieve just the ‘data’ field from a ‘dataset’ structure.
-
-# Loading datasets from .mat files in ./prtools/prtools/data folder:
-    a = read_mat('cigars')
-    print(a)
-    scatterd(a) # to visualize the data
-    print(prtools.getsize(a)) # get dimensions of the data set
-
-# Usual workflow - meta analysis
-    Open matlab and run ./prtools/BioSB-MachineLearning-2020_Translation/BioSB_essentials/Data_and_code/Data_and_code/prstartup.m
-
-    1. Run method of interest on Matlab and take note of output
-    2. Glance the code and take note of the form, behavior and flow
-    3. Check if there are libs that enable the same behavior (e.g. scipy or sklearn)
-    4. Note any dependent methods and assess time and complexity of the overall method
-    5. Construct method and submethods in python using the same names
-    6. Work on 5 until desired output (i.e. matches matlab's expected output)
-
-# On the datasets (.mat files)
-    Folder location: ./prtools/BioSB-MachineLearning-2020_Translation/BioSB_essentials/Data_and_code/Data_and_code/coursedata
-    Other .mat files exist elsewhere (e.g. wine.mat) but these are not the correct data files since they can be missing fields that break loading methods (e.g. wine.mat from another folder is missing data field).
-
-# When a is a dataset,
-    a.featlab is getsize(a,2)'s amount
-    a.data[:,0] is x
-    a.data[:,1] is y    
-    a[:,i,:] goes through featlabs where featlab is i
-    a.targets returns the different classes 
-    In uci.py, features are the data getsize(a,1)'s output and labels are getsize(a,3)'s output
-'''

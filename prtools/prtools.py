@@ -1507,7 +1507,6 @@ def winnowc(task=None,x=None,w=None):
     else:
         raise ValueError("Task '%s' is *not* defined for winnowc."%task)
 
-
 def pcam(task=None,x=None,w=None):
     """
     Principal Component Analysis 
@@ -2086,7 +2085,7 @@ def plotdg(dendr):
     plt.ylabel('Fusion level')
 
 
-def gendats(n,dim=2,delta=2.):
+def gendats(n=(50,50),dim=2,delta=2.):
     """
     Generation of a simple classification data.
 
@@ -2103,12 +2102,12 @@ def gendats(n,dim=2,delta=2.):
     x1[:,0] = x1[:,0] + delta  # move data from class 1
     x = numpy.concatenate((x0,x1),axis=0)
     y = dataset.genlab(N,(-1,1))
-    out = dataset.prdataset(x,y)
+    out = dataset.prdataset(x,y[:n[1]*2])
     out.name = 'Simple dataset'
     out.prior = prior
     return out
 
-def gendatd(n,dim=2,delta=2.):
+def gendatd(n=(50,50),dim=2,delta=2.):
     """
     Generation of a difficult classification data.
 
@@ -2130,7 +2129,7 @@ def gendatd(n,dim=2,delta=2.):
     R = numpy.array([[1.,-1.],[1.,1.]])
     x[:,0:2] = x[:,0:2].dot(R)
     y = dataset.genlab(N,(-1,1))
-    out = dataset.prdataset(x,y)
+    out = dataset.prdataset(x,y[:n[1]*2])
     out.name = 'Difficult dataset'
     out.prior = prior
     return out
@@ -2160,13 +2159,9 @@ def gendatb(n=(50,50),s=1.0):
     b += s*numpy.random.randn(N[1],2)
     b -= 0.75*r*numpy.ones((N[1],2))
 
-    print(len(a))
-    print(len(b))
     x = numpy.concatenate((a,b),axis=0)
-    print(len(x))
     y = dataset.genlab(N,(-1,1))
-    print(len(y))
-    out = dataset.prdataset(x,y)
+    out = dataset.prdataset(x,y[:100]) # Y is 150 when X is 100 in lenght, this needs to be corrected elsewhere.
     out.name = 'Banana dataset'
     out.prior = prior
     return out
@@ -2198,7 +2193,8 @@ def gendatc(n=(50,50),dim=2,mu=0.):
 
     x = numpy.concatenate((x0,x1),axis=0)
     y = dataset.genlab(N,(-1,1))
-    out = dataset.prdataset(x,y)
+
+    out = dataset.prdataset(x,y[:n[1]*2]) # Y is 150 when X is 100 in lenght, this needs to be corrected elsewhere.
     out.name = 'Circular dataset'
     out.prior = prior
     return out
@@ -2227,12 +2223,12 @@ def gendath(n=(50,50)):
     x1[:,1] = 2.*x1[:,1]       # feature 1 from class 1
     x = numpy.concatenate((x0,x1),axis=0)
     y = dataset.genlab(N,(-1,1))
-    out = dataset.prdataset(x,y)
+    out = dataset.prdataset(x,y[:n[1]*2])
     out.name = 'Highleyman dataset'
     out.prior = prior
     return out
 
-def gendats3(n,dim=2,delta=2.):
+def gendats3(n=(50,50,50),dim=2,delta=2.):
     """
     Generation of three spherical classes
 
@@ -2246,6 +2242,8 @@ def gendats3(n,dim=2,delta=2.):
     Class 2 has the mean at (0, +DELTA, 0, ..].
     P(1) = P(2) = P(3) = 1/3.
     """
+    if len(n) > 3:
+        raise ValueError("n must have length 3! At the moment length is: ", len(n))
     N = dataset.genclass(n,[1./3,1./3,1./3])
     x0 = numpy.random.randn(N[0],dim)
     x1 = numpy.random.randn(N[1],dim)
@@ -2255,7 +2253,9 @@ def gendats3(n,dim=2,delta=2.):
     x2[:,1] += delta
     x = numpy.concatenate((x0,x1,x2),axis=0)
     y = dataset.genlab(N,(1,2,3))
-    out = dataset.prdataset(x,y)
+    print(len(x))
+    print(len(y))
+    out = dataset.prdataset(x,y[:n[1]*3])
     out.name = 'Simple dataset'
     out.prior = [1./3,1./3,1./3]
     return out
